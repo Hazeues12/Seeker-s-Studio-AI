@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#0b0e1a" />
 <title>Seeker Studio AI — Production Desk</title>
+<script src="sequence.js" defer></script>
 <style>
 :root{--bg:#090c16;--panel:#111624;--panel2:#171d2e;--panel3:#20283b;--border:#2c3448;--text:#f3f4fb;--muted:#a1adc5;--dim:#697791;--gold:#e9b868;--gold2:#f6dba1;--aqua:#6de0d3;--red:#ff8797;--blue:#829bff;--radius:17px;--shadow:0 16px 40px #02040d6e;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
 *{box-sizing:border-box}body{background:var(--bg);color:var(--text);margin:0;min-height:100vh;font-size:14px}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:var(--gold)}
@@ -84,6 +85,15 @@ summary .summary-meta{margin-left:6px}
   .video-layout .panel-body{padding:13px}
   .video-layout .button,.video-layout .ghost{padding-left:10px;padding-right:10px}
 }
+#sequence-list{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:7px}
+.sequence-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px;border:1px solid var(--border);border-radius:10px;background:#0c1220}
+.sequence-clip-title{flex:1 1 150px;min-width:0;display:grid;gap:4px;overflow-wrap:anywhere}
+.sequence-clip-title small{color:var(--muted)}
+.sequence-actions{display:flex;align-items:center;gap:5px}
+#sequence-progress,#sequence-preview{display:block;width:100%;margin-top:12px}
+#sequence-progress{accent-color:var(--gold)}
+#sequence-preview{max-height:62vh;background:#080c16;border-radius:12px}
+#sequence-download{display:inline-flex;align-items:center;text-decoration:none}
 </style>
 </head>
 <body>
@@ -177,7 +187,7 @@ summary .summary-meta{margin-left:6px}
 <section data-page="video" class="hidden">
   <div class="page-head">
     <div><h1>Video Studio</h1><p id="video-shot-name">Start with a prompt or open a shot from the Director.</p></div>
-    <button type="button" class="ghost compact-action" id="video-back">Back to shot</button>
+    <button type="button" class="ghost compact-action" id="open-sequence">Sequence</button>
   </div>
   <div class="video-layout">
     <div class="panel">
@@ -186,6 +196,10 @@ summary .summary-meta{margin-left:6px}
         <div class="field">
           <label for="video-prompt">Video prompt</label>
           <textarea id="video-prompt" rows="4" maxlength="5000" placeholder="Describe the action, setting, and camera." spellcheck="false"></textarea>
+        </div>
+        <div class="field"><label for="ai-video-model">Generator</label>
+          <select id="ai-video-model" aria-describedby="ai-video-model-note"><option value="fast">Fast · LTX Video</option><option value="detail">Detail + sound · LTX-2.5</option></select>
+          <p class="note video-status" id="ai-video-model-note"></p>
         </div>
         <div class="video-settings">
           <div class="field"><label for="ai-video-length">Length</label><select id="ai-video-length"><option value="3">3 seconds</option><option value="5">5 seconds</option></select></div>
@@ -217,10 +231,18 @@ summary .summary-meta{margin-left:6px}
         </div>
         <video id="video-preview" class="hidden" controls playsinline preload="metadata" aria-label="Clip preview"></video>
         <p class="note clip-info" id="video-preview-status" role="status"></p>
-        <a class="ghost label-button hidden" id="render-download">Download clip</a>
+        <div class="button-row">
+          <a class="ghost label-button hidden" id="render-download">Download clip</a>
+          <button type="button" class="ghost hidden" id="video-add-sequence" disabled>Add to sequence</button>
+        </div>
+        <p class="note video-status" id="video-sequence-status" role="status"></p>
         <details class="studio-options" id="video-tools">
           <summary>More video tools</summary>
-          <div class="button-row"><button type="button" class="ghost" id="video-copy">Copy video prompt</button></div>
+          <div class="button-row">
+            <button type="button" class="ghost" id="video-copy">Copy video prompt</button>
+            <button type="button" class="ghost hidden" id="video-use-frame">Use final frame as reference</button>
+            <button type="button" class="ghost" id="video-back">Back to Director</button>
+          </div>
           <p class="note video-status" id="video-status" role="status"></p>
           <div class="field"><label for="video-file">Open a clip from this device</label><input type="file" id="video-file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" /></div>
           <div class="field">
@@ -231,6 +253,38 @@ summary .summary-meta{margin-left:6px}
           <div class="button-row"><button type="button" class="ghost" id="render-start">Render animatic</button><button type="button" class="ghost hidden" id="render-cancel">Cancel render</button></div>
           <p class="note video-status" id="render-status" role="status"></p>
         </details>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-page="sequence" class="hidden">
+  <div class="page-head">
+    <div><h1>Sequence</h1><p id="sequence-length">0:00 / 5:00 · 0 clips</p></div>
+    <button type="button" class="ghost compact-action" id="sequence-back">Back to Video</button>
+  </div>
+  <div class="video-layout">
+    <div class="panel">
+      <div class="panel-header"><h2>Shot order</h2><small>Up to five minutes</small></div>
+      <div class="panel-body">
+        <p class="note" id="sequence-storage">Clips are saved on this device.</p>
+        <p class="note" id="sequence-empty">Add clips here or send a finished clip from Video Studio.</p>
+        <ol id="sequence-list"></ol>
+        <input type="file" class="hidden" id="sequence-files" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" multiple />
+        <button type="button" class="ghost" id="sequence-add-files" disabled>Add clips</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><h2>Export</h2><small>MP4 · on this device</small></div>
+      <div class="panel-body">
+        <div class="field"><label for="sequence-frame">Frame</label><select id="sequence-frame"><option value="auto">Match first clip</option><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
+        <div class="button-row">
+          <button type="button" class="button" id="sequence-export" disabled>Export MP4</button>
+          <button type="button" class="ghost hidden" id="sequence-cancel">Cancel export</button>
+          <a class="ghost label-button hidden" id="sequence-download" download="seeker-sequence.mp4">Download MP4</a>
+        </div>
+        <progress class="hidden" id="sequence-progress" max="100" value="0" aria-label="MP4 export progress"></progress>
+        <p class="note video-status" id="sequence-status" role="status"></p>
+        <video class="hidden" id="sequence-preview" controls playsinline preload="metadata" aria-label="Sequence preview"></video>
       </div>
     </div>
   </div>
@@ -323,13 +377,14 @@ function updateShotsSummary(){
  $('shots-summary').textContent=count+' saved '+(count===1?'shot':'shots')+' · '+clock(runtime)+' planned';
 }
 function tab(name){
+ if(name!=='sequence')$('sequence-preview').pause();
  if(name!=='video'){
    cancelRender();
    $('video-preview').pause();
  }
  document.querySelectorAll('[data-page]').forEach(page=>page.classList.toggle('hidden',page.dataset.page!==name));
  document.querySelectorAll('[data-tab]').forEach(button=>{
-   const selected=button.dataset.tab===name;
+   const selected=button.dataset.tab===(name==='sequence'?'video':name);
    button.classList.toggle('active',selected);
    if(selected)button.setAttribute('aria-current','page');
    else button.removeAttribute('aria-current');
@@ -345,7 +400,7 @@ function renderShots(){updateShotsSummary();$('shot-board-hint').textContent='';
  const shot=state.shots.find(item=>item.id===button.dataset.video);
  if(shot)openVideo(shot,'shots');
 });document.querySelectorAll('[data-delete]').forEach(x=>x.onclick=()=>{if(!confirm('Delete this saved shot?'))return;state.shots=state.shots.filter(a=>a.id!==x.dataset.delete);persist();renderShots()})}
-let renderShot, activeRender, videoClipUrl, referenceArtUrl, clipLabel;
+let renderShot, activeRender, videoClipUrl, referenceArtUrl, frameReference, clipLabel;
 let videoOrigin='studio';
 function showVideoWorkspace(){
  if(!renderShot&&!$('video-prompt').value.trim()){
@@ -372,6 +427,7 @@ function openVideo(shot, origin){
    shot.setting&&'Setting: '+shot.setting,
    'On-screen action: '+shot.action,
    shot.camera&&'Camera: '+shot.camera,
+   shot.audio&&'Sound: '+shot.audio,
    shot.effects&&'Effects: '+shot.effects,
    shot.dialogue&&'Character performance for this line: '+shot.dialogue
  ];
@@ -383,12 +439,16 @@ function openVideo(shot, origin){
  $('video-status').textContent='';
  $('render-status').textContent='';
  $('render-art').value='';
+ frameReference=null;
  updateReferencePreview();
  tab('video');
 }
+function getReferenceArt(){
+ return $('render-art').files[0]||frameReference;
+}
 function updateReferencePreview(){
  if(referenceArtUrl)URL.revokeObjectURL(referenceArtUrl);
- const file=$('render-art').files[0];
+ const file=getReferenceArt();
  const image=$('reference-image');
  referenceArtUrl=file?URL.createObjectURL(file):null;
  if(referenceArtUrl)image.src=referenceArtUrl;
@@ -397,6 +457,49 @@ function updateReferencePreview(){
  $('reference-preview').classList.toggle('hidden',!file);
  $('ai-video-consent').checked=false;
  if(!aiVideoRequest)$('ai-video-status').textContent='';
+}
+async function useFinalFrame(){
+ const video=$('video-preview');
+ const status=$('video-status');
+ const button=$('video-use-frame');
+ if(!videoClipUrl||!Number.isFinite(video.duration)||!video.videoWidth){
+   status.textContent='Wait for the clip to finish loading first.';
+   return;
+ }
+ button.disabled=true;
+ const url=videoClipUrl;
+ try{
+   video.pause();
+   const timestamp=Math.max(0,video.duration-1/30);
+   if(Math.abs(video.currentTime-timestamp)>.005||video.readyState<2){
+     await new Promise((resolve,reject)=>{
+       const seeked=()=>finish(resolve);
+       const timer=setTimeout(()=>finish(reject,Error('The video frame did not load.')),8000);
+       function finish(callback,value){
+         clearTimeout(timer);
+         video.removeEventListener('seeked',seeked);
+         callback(value);
+       }
+       video.addEventListener('seeked',seeked,{once:true});
+       video.currentTime=timestamp;
+     });
+   }
+   const canvas=document.createElement('canvas');
+   const scale=Math.min(1,1280/Math.max(video.videoWidth,video.videoHeight));
+   canvas.width=Math.round(video.videoWidth*scale);
+   canvas.height=Math.round(video.videoHeight*scale);
+   canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+   const image=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.92));
+   if(!image||videoClipUrl!==url)throw Error('The preview changed before its final frame was ready.');
+   $('render-art').value='';
+   frameReference=new File([image],'previous-clip-final-frame.jpg',{type:'image/jpeg'});
+   updateReferencePreview();
+   status.textContent='Final frame added as reference art for your next clip.';
+ }catch(error){
+   status.textContent=error.message;
+ }finally{
+   button.disabled=false;
+ }
 }
 function clipFilename(shot, suffix, extension){
  const name=(shot?.name||'seeker').replace(/[^a-z0-9]+/gi,'-').slice(0,80).replace(/^-|-$/g,'')||'seeker';
@@ -417,6 +520,8 @@ function showVideoClip(file, kind){
  download.href=videoClipUrl;
  download.download=file.name;
  download.classList.remove('hidden');
+ $('video-use-frame').classList.remove('hidden');
+ window.dispatchEvent(new CustomEvent('seeker:clip',{detail:file}));
  if(!$('video-result').closest('[data-page]').classList.contains('hidden')){
    $('video-result').scrollIntoView({block:'nearest'});
  }
@@ -518,7 +623,7 @@ async function renderAnimatic(){
  let stream, frame;
  try{
    status.textContent='Preparing render…';
-   const art=await loadRenderArt($('render-art').files[0]);
+   const art=await loadRenderArt(getReferenceArt());
    if(run.cancelled)return;
    const ctx=canvas.getContext('2d',{alpha:false});
    if(!ctx)throw Error('Canvas drawing is unavailable.');
@@ -567,13 +672,25 @@ async function renderAnimatic(){
  }
 }
 
-const sharedGpu='https://lightricks-ltx-video-distilled.hf.space';
+const videoModels={
+ fast:'https://lightricks-ltx-video-distilled.hf.space',
+ detail:'https://lightricks-ltx-2-5.hf.space'
+};
+function updateVideoModel(){
+ const detail=$('ai-video-model').value==='detail';
+ const length=$('ai-video-length');
+ length.querySelector('option[value="5"]').disabled=detail;
+ if(detail)length.value='3';
+ $('ai-video-model-note').textContent=detail?'Three seconds with model-generated sound. Free GPU capacity varies.':'';
+}
 let aiVideoRequest;
 async function generateAiVideo(){
  if(aiVideoRequest||activeRender)return;
  const status=$('ai-video-status'), button=$('ai-video-start');
  const prompt=$('video-prompt').value.trim();
- const art=$('render-art').files[0];
+ const art=getReferenceArt();
+ const detail=$('ai-video-model').value==='detail';
+ const sharedGpu=videoModels[detail?'detail':'fast'];
  const shot=renderShot;
  const portrait=$('ai-video-frame').value==='portrait';
  const seconds=Number($('ai-video-length').value);
@@ -608,11 +725,13 @@ async function generateAiVideo(){
      reference={path,meta:{_type:'gradio.FileData'}};
    }
    status.textContent='Submitting to the free GPU queue…';
-   const endpoint=art?'image_to_video':'text_to_video';
+   const endpoint=detail?'run':art?'image_to_video':'text_to_video';
    const mode=art?'image-to-video':'text-to-video';
    const height=portrait?736:416, width=portrait?416:736;
    const direction=art?prompt+'\nKeep the character design and palette established by the first frame.':prompt;
-   const data=[direction,'blurry, flicker, jitter, warped hands, costume changes, unwanted text',reference,null,height,width,mode,seconds,9,42,true,3,true];
+   const data=detail
+     ? [direction,reference,portrait?896:512,portrait?512:896,3,42,'conv',false,true,false]
+     : [direction,'blurry, flicker, jitter, warped hands, costume changes, unwanted text',reference,null,height,width,mode,seconds,9,42,true,3,true];
    const job=await (await request('call/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})})).json();
    if(typeof job.event_id!=='string'||!job.event_id)throw Error('The shared GPU did not return a job ID.');
    status.textContent='Waiting for the shared GPU. You can switch Studio tabs while it runs.';
@@ -634,8 +753,8 @@ async function generateAiVideo(){
    signal.throwIfAborted();
    if(!video.size||!video.type.startsWith('video/'))throw Error('The response was not a playable video.');
    const extension=video.type.includes('webm')?'webm':'mp4';
-   const clip=new File([video],clipFilename(shot,'ai',extension),{type:video.type});
-   showVideoClip(clip,'AI video');
+   const clip=new File([video],clipFilename(shot,detail?'ltx25':'ai',extension),{type:video.type});
+   showVideoClip(clip,detail?'LTX-2.5 · with sound':'LTX Video');
    status.textContent='AI clip ready.';
  }catch(error){
    if(signal.aborted){
@@ -678,15 +797,23 @@ function init(){renderCanon();setForm(state.draft);for(let id of Object.values(f
    const prompt=$('video-prompt').value.trim();
    if(prompt)copyText(prompt,'Video prompt copied','video-status');
  };
+ $('open-sequence').onclick=()=>tab('sequence');
+ $('sequence-back').onclick=showVideoWorkspace;
  $('video-back').onclick=()=>tab(videoOrigin);
  $('video-file').onchange=event=>{
    const file=event.target.files[0];
    if(file)showVideoClip(file,'Imported clip');
    event.target.value='';
  };
- $('render-art').onchange=updateReferencePreview;
+ $('render-art').onchange=()=>{
+   frameReference=null;
+   updateReferencePreview();
+ };
+ $('ai-video-model').onchange=updateVideoModel;
+ $('video-use-frame').onclick=useFinalFrame;
  $('reference-remove').onclick=()=>{
    $('render-art').value='';
+   frameReference=null;
    updateReferencePreview();
  };
  $('video-prompt').oninput=()=>{
