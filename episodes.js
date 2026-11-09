@@ -2,6 +2,8 @@
 
 (() => {
   const by = id => document.getElementById(id);
+  const positionKey = 'seeker_studio_episode_position';
+  const sameVersion = (doc, source) => doc && source && doc.id === source.documentId && doc.updated === source.updated;
   const titleKey = title => String(title || '')
     .replace(/^(?:(?:chapter|ch\.?)\s+\d+\b\s*[:.·–—-]?\s*|\d+\s*[:.·–—-]\s*)/i, '')
     .normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
@@ -95,6 +97,11 @@
     const planPanel = by('episode-plan');
     let catalog, activeDoc, beats = [], savedByChapter = new Map();
 
+    function savedPosition() {
+      try { return JSON.parse(localStorage.getItem(positionKey)); }
+      catch (_) { return null; }
+    }
+
     function findSaved(chapter) {
       return savedByChapter.get(chapter?.id);
     }
@@ -152,6 +159,13 @@
       const index = Number(picker.value);
       const beat = beats[index];
       if (!beat) return;
+      if (activeDoc.saved) {
+        try {
+          localStorage.setItem(positionKey, JSON.stringify({
+            documentId: activeDoc.id, updated: activeDoc.updated, beat: index + 1
+          }));
+        } catch (_) {}
+      }
       by('episode-excerpt').textContent = beat.excerpt;
       const quotes = [...new Set(sourceQuotes(beat.excerpt))].filter(quote => quote.length <= 160);
       const quoteSelect = by('episode-quote');
@@ -171,7 +185,45 @@
       by('episode-next').disabled = index >= beats.length - 1;
     }
 
-    function plan(doc) {
+    function beatsInSequence(links = globalThis.SeekerSequence?.beatLinks || []) {
+      return new Set(links.filter(source =>
+        sameVersion(activeDoc, source) && beats[source.beat - 1]
+      ).map(source => source.beat));
+    }
+
+    function renderProgress() {
+      if (!activeDoc) return;
+      const links = globalThis.SeekerSequence?.beatLinks || [];
+      const covered = beatsInSequence(links);
+      const otherVersions = links.some(source =>
+        source.documentId === activeDoc.id && source.updated !== activeDoc.updated
+      );
+      for (const [index, option] of Array.from(picker.options).entries()) {
+        const beat = beats[index];
+        const lines = beat.firstLine === beat.lastLine ? 'line ' + beat.firstLine : 'lines ' + beat.firstLine + '–' + beat.lastLine;
+        option.textContent = 'Beat ' + (index + 1) + ' · ' + lines +
+          (covered.has(index + 1) ? ' · In sequence' : '');
+      }
+      const status = covered.size + ' of ' + beats.length + ' beats in Sequence.';
+      by('episode-progress').textContent = status +
+        (covered.size === beats.length ? ' Review the cut when ready.' : '') +
+        (otherVersions ? ' Sequence includes clips from another version of this chapter.' : '');
+      by('episode-sequence').classList.toggle('hidden', !covered.size && !otherVersions);
+    }
+
+    function selectBeat(number, advance) {
+      let index = beats[number - 1] ? number - 1 : Number(picker.value) || 0;
+      if (advance) {
+        const covered = beatsInSequence();
+        const later = beats.findIndex((_, i) => i > index && !covered.has(i + 1));
+        const next = later >= 0 ? later : beats.findIndex((_, i) => !covered.has(i + 1));
+        if (next >= 0) index = next;
+      }
+      picker.value = String(index);
+      renderBeat();
+    }
+
+    function plan(doc, { beat, advance = false } = {}) {
       if (!doc?.title?.trim() || !doc.content.trim() || doc.kind === 'notes') {
         notify('Open a chapter with a title and manuscript text to make an episode plan.');
         return false;
@@ -188,35 +240,37 @@
       by('episode-plan-title').textContent = doc.title;
       by('episode-plan-summary').textContent = beats.length + (beats.length === 1 ? ' source beat' : ' source beats') +
         ' · ' + (doc.kind === 'published' ? 'Published text (author-marked)' : 'Draft text') +
-        (doc.saved ? ' · saved' : ' · unsaved snapshot');
-      picker.replaceChildren(...beats.map((beat, index) => {
+        (doc.saved ? ' · saved' : ' · Save the chapter before generating to resume this plan later.');
+      picker.replaceChildren(...beats.map((_, index) => {
         const option = document.createElement('option');
         option.value = String(index);
-        option.textContent = 'Beat ' + (index + 1) + ' · lines ' + beat.firstLine + '–' + beat.lastLine;
         return option;
       }));
       planPanel.classList.remove('hidden');
-      renderBeat();
+      const position = savedPosition();
+      renderProgress();
+      selectBeat(beat ?? (sameVersion(doc, position) ? position.beat : 1), advance);
       navigate('episode');
       return true;
     }
 
-    function openSource(source) {
-      const sameVersion = doc => doc?.id === source.documentId && doc.updated === source.updated;
-      if (!sameVersion(activeDoc)) {
-        const doc = documents().find(sameVersion);
-        if (doc) plan({ ...doc, saved: true });
-        else {
-          planPanel.classList.add('hidden');
-          series.value = source.series;
-          renderCatalog(chapterMatch(catalog, source.series, source.title)?.id || '');
-          navigate('episode');
+    function openSource(source, advance = false) {
+      if (!sameVersion(activeDoc, source)) {
+        const doc = documents().find(doc => sameVersion(doc, source));
+        if (doc) {
+          plan({ ...doc, saved: true }, { beat: source.beat, advance });
           return;
         }
+        activeDoc = null;
+        planPanel.classList.add('hidden');
+        series.value = source.series;
+        renderCatalog(chapterMatch(catalog, source.series, source.title)?.id || '');
+        by('episode-text-status').textContent = 'Open the original manuscript version to resume this beat.';
+        navigate('episode');
+        return;
       }
-      if (source.beat && beats[source.beat - 1]) picker.value = String(source.beat - 1);
       planPanel.classList.remove('hidden');
-      renderBeat();
+      selectBeat(source.beat, advance);
       navigate('episode');
     }
 
@@ -231,11 +285,17 @@
           plan(current);
         }
       } else {
+        const position = savedPosition();
+        const doc = !activeDoc && documents().find(doc => doc.id === position?.documentId);
+        if (doc && plan({ ...doc, saved: true })) return;
         renderCatalog();
         navigate('episode');
       }
     };
     by('episode-back').onclick = () => navigate('brain');
+    by('episode-sequence').onclick = () => navigate('sequence');
+    window.addEventListener('seeker:sequence-change', renderProgress);
+    window.addEventListener('seeker:episode-continue', event => openSource(event.detail, true));
     series.onchange = () => renderCatalog('');
     chapters.onchange = updateSelection;
     by('episode-open-text').onclick = () => {

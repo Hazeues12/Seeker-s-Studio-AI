@@ -13,6 +13,14 @@
   let db, currentClip, rejectExport, outputUrl;
   let clips = [];
   let busy = true;
+  const addPreview = get('video-add-sequence');
+  const continueEpisode = get('video-continue-episode');
+
+  globalThis.SeekerSequence = {
+    get beatLinks() {
+      return clips.filter(clip => clip.source?.beat).map(clip => clip.source);
+    }
+  };
 
   const sortClips = entries => entries.sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
   const total = entries => entries.reduce((sum, clip) => sum + clip.frames, 0);
@@ -96,7 +104,11 @@
   }
 
   function updateButtons() {
-    get('video-add-sequence').disabled = busy || !currentClip;
+    const savedBeat = currentClip?.source?.beat && clips.some(clip => clip.id === currentClip.id);
+    addPreview.disabled = busy || !currentClip || Boolean(savedBeat);
+    addPreview.textContent = savedBeat ? 'Added to sequence' : 'Add to sequence';
+    continueEpisode.classList.toggle('hidden', !savedBeat);
+    continueEpisode.disabled = busy || !savedBeat;
     get('sequence-export').disabled = busy || !clips.length;
     get('sequence-files').disabled = busy;
     get('sequence-frame').disabled = busy;
@@ -131,6 +143,13 @@
       const duration = document.createElement('small');
       duration.textContent = 'Shot ' + (index + 1) + ' · ' + (clip.frames / fps).toFixed(1) + ' s';
       title.append(name, duration);
+      if (clip.source) {
+        const source = document.createElement('small');
+        const {title: chapter, beat, firstLine, lastLine} = clip.source;
+        const lines = firstLine === lastLine ? 'line ' + firstLine : 'lines ' + firstLine + '–' + lastLine;
+        source.textContent = chapter + (beat ? ' · Beat ' + beat : ' · Excerpt') + ' · ' + lines;
+        title.append(source);
+      }
       const actions = document.createElement('div');
       actions.className = 'sequence-actions';
       actions.append(
@@ -142,6 +161,7 @@
       list.append(row);
     }
     updateButtons();
+    window.dispatchEvent(new Event('seeker:sequence-change'));
   }
 
   async function changeSequence(change, message) {
@@ -176,20 +196,26 @@
     return changeSequence(entries => entries.filter(clip => clip.id !== id), 'Shot removed from the sequence.');
   }
 
-  async function addFiles(files, messageTarget) {
+  async function addFiles(files, messageTarget, fromPreview) {
     if (!files.length || busy) return;
+    const linkedId = fromPreview?.source?.beat ? fromPreview.id : null;
+    const showStatus = message => {
+      if (!fromPreview || fromPreview === currentClip) messageTarget.textContent = message;
+    };
     busy = true;
     updateButtons();
     try {
       if (files.length > 300 || files.reduce((sum, file) => sum + file.size, 0) > maxBytes) {
         throw Error('Choose up to 256 MB of video for one sequence.');
       }
-      messageTarget.textContent = 'Reading clip details…';
+      showStatus('Reading clip details…');
       const info = await mediaJob({ action: 'inspect', files });
       clips = await sequenceTransaction(entries => {
+        if (linkedId && entries.some(clip => clip.id === linkedId)) return entries;
         const start = (entries.at(-1)?.order ?? -1) + 1;
         const next = entries.concat(files.map((file, index) => ({
-          ...info[index], file, id: crypto.randomUUID(), order: start + index
+          ...info[index], file, id: linkedId || crypto.randomUUID(), order: start + index,
+          source: fromPreview?.source
         })));
         if (total(next) > maxFrames) throw Error('This would put the sequence over 5:00.');
         if (next.reduce((sum, clip) => sum + clip.file.size, 0) > maxBytes) {
@@ -198,9 +224,9 @@
         return next;
       });
       clearOutput();
-      messageTarget.textContent = 'Added to sequence · ' + time(total(clips)) + ' / 5:00';
+      showStatus('Added to sequence · ' + time(total(clips)) + ' / 5:00');
     } catch (error) {
-      messageTarget.textContent = error.message;
+      showStatus(error.message);
     } finally {
       busy = false;
       renderList();
@@ -255,13 +281,16 @@
   };
   get('sequence-export').onclick = exportSequence;
   get('sequence-cancel').onclick = () => rejectExport?.();
-  get('video-add-sequence').onclick = () => {
-    if (currentClip) addFiles([currentClip], videoStatus);
+  addPreview.onclick = () => {
+    if (currentClip) addFiles([currentClip.file], videoStatus, currentClip);
+  };
+  continueEpisode.onclick = () => {
+    window.dispatchEvent(new CustomEvent('seeker:episode-continue', { detail: currentClip.source }));
   };
   window.addEventListener('seeker:clip', event => {
-    currentClip = event.detail;
+    currentClip = { ...event.detail, id: crypto.randomUUID() };
     videoStatus.textContent = '';
-    get('video-add-sequence').classList.remove('hidden');
+    addPreview.classList.remove('hidden');
     updateButtons();
   });
 

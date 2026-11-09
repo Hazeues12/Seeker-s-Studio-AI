@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#0b0e1a" />
 <title>Seeker Studio AI — Production Desk</title>
-<script src="sequence.js?v=2" defer></script>
+<script src="sequence.js?v=3" defer></script>
 <style>
 :root{--bg:#090c16;--panel:#111624;--panel2:#171d2e;--panel3:#20283b;--border:#2c3448;--text:#f3f4fb;--muted:#a1adc5;--dim:#697791;--gold:#e9b868;--gold2:#f6dba1;--aqua:#6de0d3;--red:#ff8797;--blue:#829bff;--radius:17px;--shadow:0 16px 40px #02040d6e;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
 *{box-sizing:border-box}body{background:var(--bg);color:var(--text);margin:0;min-height:100vh;font-size:14px}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:var(--gold)}
@@ -214,6 +214,7 @@ summary .summary-meta{margin-left:6px}
       <div class="panel-header"><h2 id="episode-plan-title"></h2></div>
       <div class="panel-body">
         <p class="note" id="episode-plan-summary"></p>
+        <p class="note" id="episode-progress" role="status"></p>
         <div class="field"><label for="episode-beat">Source beat</label><select id="episode-beat"></select></div>
         <div class="preview-text episode-passage" id="episode-excerpt" tabindex="0" aria-label="Exact source passage"></div>
         <div class="field hidden" id="episode-quote-field"><label for="episode-quote">Exact dialogue to include</label><select id="episode-quote"></select></div>
@@ -222,6 +223,7 @@ summary .summary-meta{margin-left:6px}
           <button type="button" class="button" id="episode-stage">Review in Director</button>
           <button type="button" class="ghost compact-action" id="episode-prev">Previous beat</button>
           <button type="button" class="ghost compact-action" id="episode-next">Next beat</button>
+          <button type="button" class="ghost compact-action hidden" id="episode-sequence">Review sequence</button>
         </div>
       </div>
     </div>
@@ -274,9 +276,11 @@ summary .summary-meta{margin-left:6px}
         </div>
         <video id="video-preview" class="hidden" controls playsinline preload="metadata" aria-label="Clip preview"></video>
         <p class="note clip-info" id="video-preview-status" role="status"></p>
+        <p class="note clip-info" id="video-clip-source"></p>
         <div class="button-row">
           <a class="ghost label-button hidden" id="render-download">Download clip</a>
           <button type="button" class="ghost hidden" id="video-add-sequence" disabled>Add to sequence</button>
+          <button type="button" class="button hidden" id="video-continue-episode" disabled>Continue episode</button>
         </div>
         <p class="note video-status" id="video-sequence-status" role="status"></p>
         <details class="studio-options" id="video-tools">
@@ -359,7 +363,7 @@ summary .summary-meta{margin-left:6px}
 <div class="workspace"><div class="panel"><div class="panel-header"><h2>Download deliverables</h2></div><div class="panel-body"><p class="sect-title">Editable project data</p><p class="note">JSON stores your shots and draft, suitable for re-importing into this app. Keep private chapter text secure.</p><div class="button-row"><button class="button" id="export-json">Download project JSON</button><button class="ghost" id="export-txt">Download prompt pack TXT</button></div><div class="small-divider"></div><p class="sect-title">Restore a project</p><div class="field"><label for="import-json">Select your saved JSON backup</label><input type="file" id="import-json" accept=".json,application/json" /></div><div id="import-status" class="hint" role="status" aria-live="polite">Import replaces the current workspace. Export a backup first.</div></div></div></div>
 </section>
 </div></main></div>
-<script src="episodes.js?v=1"></script>
+<script src="episodes.js?v=2"></script>
 <script>
 'use strict';
 const DB_KEY='seekers_codex_studio_v1';
@@ -407,9 +411,10 @@ function characterPrompt(c,d){
  const voice=c.id==='william'?' Preserve his established voice and avoid “y’all”.':'';
  return c.name+':'+design+' Keep the appearance, equipment, age and abilities established for this passage.'+voice;
 }
-function describeSource(source){
+function describeSource(source,includeTitle=true){
  const status=source.kind==='published'?'Published text (author-marked)':source.kind==='notes'?'Canon notes':'Draft text';
- return source.title+' · '+(source.firstLine===source.lastLine?'line '+source.firstLine:'lines '+source.firstLine+'–'+source.lastLine)+' · '+status;
+ const lines=source.firstLine===source.lastLine?'line '+source.firstLine:'lines '+source.firstLine+'–'+source.lastLine;
+ return (includeTitle?source.title+' · ':'')+lines+' · '+status;
 }
 function sameText(a,b){return a.replace(/\r\n?/g,'\n')===b.replace(/\r\n?/g,'\n');}
 function canonReport(d){
@@ -463,7 +468,12 @@ function updateShotsSummary(){
  const runtime=state.shots.reduce((sum,shot)=>sum+Number(shot.duration||0),0);
  $('shots-summary').textContent=count+' saved '+(count===1?'shot':'shots')+' · '+clock(runtime)+' planned';
 }
+let sequenceOrigin='video';
 function tab(name){
+ if(name==='sequence'){
+   sequenceOrigin=document.querySelector('[data-page="episode"]:not(.hidden)')?'episode':'video';
+   $('sequence-back').textContent=sequenceOrigin==='episode'?'Back to Episode':'Back to Video';
+ }
  if(name!=='sequence')$('sequence-preview').pause();
  if(name!=='video'){
    cancelRender();
@@ -487,8 +497,24 @@ function renderShots(){updateShotsSummary();$('shot-board-hint').textContent='';
  const shot=state.shots.find(item=>item.id===button.dataset.video);
  if(shot)openVideo(shot,'shots');
 });document.querySelectorAll('[data-delete]').forEach(x=>x.onclick=()=>{if(!confirm('Delete this saved shot?'))return;state.shots=state.shots.filter(a=>a.id!==x.dataset.delete);persist();renderShots()})}
-let renderShot, activeRender, videoClipUrl, referenceArtUrl, frameReference, clipLabel;
+let renderShot, activeRender, videoClipUrl, referenceArtUrl, frameReference, clipLabel, clipSource;
+let preparedVideoPrompt='';
 let videoOrigin='studio';
+function currentVideoShot(){
+ return preparedVideoPrompt&&$('video-prompt').value.trim()===preparedVideoPrompt?renderShot:null;
+}
+function updateVideoHeading(){
+ const shot=currentVideoShot();
+ if(shot){
+   const name=shot.name||'Untitled shot';
+   const source=shot.source;
+   $('video-shot-name').textContent=name+(source?' · '+describeSource(source,!name.startsWith(source.title+' · ')):'');
+ }else{
+   $('video-shot-name').textContent=renderShot?.source
+     ? 'Custom prompt · edit in Director to keep the chapter link.'
+     : 'Custom prompt';
+ }
+}
 function showVideoWorkspace(){
  if(!renderShot&&!$('video-prompt').value.trim()){
    const shot=readForm();
@@ -519,14 +545,15 @@ function openVideo(shot, origin){
    shot.dialogue&&'Speak this exact dialogue without adding lines: '+shot.dialogue,
    shot.source&&!shot.dialogue&&'Use environmental audio without speech.'
  ];
- const previousSource=renderShot?.source;
  const source=shot.source;
- const sameChapter=source?.documentId&&source.documentId===previousSource?.documentId&&source.updated===previousSource.updated;
+ const referenceSource=frameReference?.source;
+ const sameChapter=source?.documentId&&source.documentId===referenceSource?.documentId&&source.updated===referenceSource.updated;
  renderShot=shot;
  videoOrigin=origin;
  $('video-back').textContent=origin==='shots'?'Back to Shots':'Back to Director';
- $('video-shot-name').textContent=(shot.name||'Untitled shot')+(source?' · '+describeSource(source):'');
- $('video-prompt').value=directions.filter(Boolean).join('\n');
+ preparedVideoPrompt=directions.filter(Boolean).join('\n').trim();
+ $('video-prompt').value=preparedVideoPrompt;
+ updateVideoHeading();
  if(source)$('ai-video-length').value=$('ai-video-model').value==='detail'||shot.duration<=3?'3':'5';
  updateVideoModel();
  $('video-status').textContent='';
@@ -537,7 +564,7 @@ function openVideo(shot, origin){
  tab('video');
 }
 function getReferenceArt(){
- return $('render-art').files[0]||frameReference;
+ return $('render-art').files[0]||frameReference?.file;
 }
 function updateReferencePreview(){
  if(referenceArtUrl)URL.revokeObjectURL(referenceArtUrl);
@@ -585,7 +612,7 @@ async function useFinalFrame(){
    const image=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.92));
    if(!image||videoClipUrl!==url)throw Error('The preview changed before its final frame was ready.');
    $('render-art').value='';
-   frameReference=new File([image],'previous-clip-final-frame.jpg',{type:'image/jpeg'});
+   frameReference={file:new File([image],'previous-clip-final-frame.jpg',{type:'image/jpeg'}),source:clipSource};
    updateReferencePreview();
    status.textContent='Final frame added as reference art for your next clip.';
  }catch(error){
@@ -598,23 +625,29 @@ function clipFilename(shot, suffix, extension){
  const name=(shot?.name||'seeker').replace(/[^a-z0-9]+/gi,'-').slice(0,80).replace(/^-|-$/g,'')||'seeker';
  return name+'-'+suffix+'.'+extension;
 }
-function showVideoClip(file, kind){
+function showVideoClip(file, kind, source){
  const nextUrl=URL.createObjectURL(file);
  if(videoClipUrl)URL.revokeObjectURL(videoClipUrl);
  videoClipUrl=nextUrl;
  clipLabel=file.name;
+ clipSource=source;
  const preview=$('video-preview');
  preview.src=videoClipUrl;
  preview.classList.remove('hidden');
  $('video-empty').classList.add('hidden');
  $('video-clip-kind').textContent=kind;
  $('video-preview-status').textContent=clipLabel;
+ $('video-clip-source').textContent=source?describeSource(source):'';
  const download=$('render-download');
  download.href=videoClipUrl;
  download.download=file.name;
  download.classList.remove('hidden');
  $('video-use-frame').classList.remove('hidden');
- window.dispatchEvent(new CustomEvent('seeker:clip',{detail:file}));
+ const link=source&&{
+   documentId:source.documentId,updated:source.updated,title:source.title,series:source.series,beat:source.beat,
+   firstLine:source.firstLine,lastLine:source.lastLine
+ };
+ window.dispatchEvent(new CustomEvent('seeker:clip',{detail:{file,source:link}}));
  if(!$('video-result').closest('[data-page]').classList.contains('hidden')){
    $('video-result').scrollIntoView({block:'nearest'});
  }
@@ -723,7 +756,8 @@ async function renderAnimatic(){
    canvas.classList.remove('hidden');
    paintAnimatic(ctx,shot,art,motion,0,seconds);
    stream=canvas.captureStream(24);
-   const mime=['video/mp4','video/webm;codecs=vp8','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));
+   const mime=['video/webm;codecs=vp8','video/mp4;codecs=avc1.42001f','video/mp4','video/webm']
+     .find(type=>MediaRecorder.isTypeSupported(type));
    const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
    run.recorder=recorder;
    const parts=[];
@@ -749,8 +783,8 @@ async function renderAnimatic(){
    const type=recorder.mimeType||parts[0].type;
    const extension=type.includes('mp4')?'mp4':'webm';
    const clip=new File(parts,clipFilename(shot,'animatic',extension),{type});
-   showVideoClip(clip,'Local animatic');
-   status.textContent='Render complete · '+seconds+' seconds · '+extension.toUpperCase();
+   showVideoClip(clip,'Local animatic',shot.source);
+   status.textContent='Render complete · '+extension.toUpperCase();
  }catch(error){
    status.textContent='Render failed. '+error.message;
  }finally{
@@ -776,7 +810,7 @@ function updateVideoModel(){
  if(detail)length.value='3';
  $('ai-video-model-note').textContent=detail
    ? 'Three seconds with generated audio. Check any spoken line and lip sync in the preview.'
-   : renderShot?.dialogue?'Fast makes silent clips. Choose Detail + sound to try the spoken line.':'Silent clips, 3 or 5 seconds.';
+   : currentVideoShot()?.dialogue?'Fast makes silent clips. Choose Detail + sound to try the spoken line.':'Silent clips, 3 or 5 seconds.';
 }
 let aiVideoRequest;
 async function generateAiVideo(){
@@ -786,7 +820,7 @@ async function generateAiVideo(){
  const art=getReferenceArt();
  const detail=$('ai-video-model').value==='detail';
  const sharedGpu=videoModels[detail?'detail':'fast'];
- const shot=renderShot;
+ const shot=currentVideoShot();
  const portrait=$('ai-video-frame').value==='portrait';
  const seconds=Number($('ai-video-length').value);
  if(!prompt||prompt.length>5000){status.textContent='Enter a prompt between 1 and 5,000 characters.';return;}
@@ -849,7 +883,7 @@ async function generateAiVideo(){
    if(!video.size||!video.type.startsWith('video/'))throw Error('The response was not a playable video.');
    const extension=video.type.includes('webm')?'webm':'mp4';
    const clip=new File([video],clipFilename(shot,detail?'ltx25':'ai',extension),{type:video.type});
-   showVideoClip(clip,detail?'LTX-2.5 · with sound':'LTX Video');
+   showVideoClip(clip,detail?'LTX-2.5 · with sound':'LTX Video',shot?.source);
    status.textContent='AI clip ready.';
  }catch(error){
    if(signal.aborted){
@@ -893,7 +927,7 @@ function init(){renderCanon();setForm(state.draft);for(let id of Object.values(f
    if(prompt)copyText(prompt,'Video prompt copied','video-status');
  };
  $('open-sequence').onclick=()=>tab('sequence');
- $('sequence-back').onclick=showVideoWorkspace;
+ $('sequence-back').onclick=()=>sequenceOrigin==='episode'?tab('episode'):showVideoWorkspace();
  $('video-back').onclick=()=>tab(videoOrigin);
  $('video-file').onchange=event=>{
    const file=event.target.files[0];
@@ -913,6 +947,8 @@ function init(){renderCanon();setForm(state.draft);for(let id of Object.values(f
    updateReferencePreview();
  };
  $('video-prompt').oninput=()=>{
+   updateVideoHeading();
+   updateVideoModel();
    $('ai-video-consent').checked=false;
    if(!aiVideoRequest)$('ai-video-status').textContent='';
  };
@@ -1051,7 +1087,11 @@ async function save(){
  const d=draft();
  if(!d.title||!d.content.trim())return message('Add a chapter title and source text before saving.');
  if(d.content.length>MAX_CHARS)return message('Chapter too long. Split it into files under 250,000 characters.');
- d.created=documents.find(doc=>doc.id===d.id)?.created||d.updated;
+ const previous=documents.find(doc=>doc.id===d.id);
+ if(previous&&['series','kind','title'].every(key=>previous[key]===d[key])&&sameText(previous.content,d.content)){
+   return message('Saved '+d.title+' to browser storage.');
+ }
+ d.created=previous?.created||d.updated;
  const button=by('brain-save');
  const originalId=activeId;
  button.disabled=true;
