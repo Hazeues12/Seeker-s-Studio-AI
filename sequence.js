@@ -98,7 +98,7 @@
   function updateButtons() {
     get('video-add-sequence').disabled = busy || !currentClip;
     get('sequence-export').disabled = busy || !clips.length;
-    get('sequence-add-files').disabled = busy;
+    get('sequence-files').disabled = busy;
     get('sequence-frame').disabled = busy;
     for (const button of list.querySelectorAll('button')) {
       button.disabled = busy || button.dataset.boundary === 'true';
@@ -244,7 +244,6 @@
     }
   }
 
-  get('sequence-add-files').onclick = () => get('sequence-files').click();
   get('sequence-files').onchange = event => {
     const files = Array.from(event.target.files);
     event.target.value = '';

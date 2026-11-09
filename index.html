@@ -269,8 +269,10 @@ summary .summary-meta{margin-left:6px}
         <p class="note" id="sequence-storage">Clips are saved on this device.</p>
         <p class="note" id="sequence-empty">Add clips here or send a finished clip from Video Studio.</p>
         <ol id="sequence-list"></ol>
-        <input type="file" class="hidden" id="sequence-files" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" multiple />
-        <button type="button" class="ghost" id="sequence-add-files" disabled>Add clips</button>
+        <div class="field">
+          <label for="sequence-files">Add clips</label>
+          <input type="file" id="sequence-files" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" multiple disabled />
+        </div>
       </div>
     </div>
     <div class="panel">

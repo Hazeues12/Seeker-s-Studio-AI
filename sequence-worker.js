@@ -71,8 +71,10 @@ async function writeSilence(source, from, to, timelineStart) {
 }
 
 async function writeAudio(track, source, start, frames, offset) {
-  const duration = frames / fps;
-  const length = frames * (sampleRate / fps);
+  const samplesPerFrame = sampleRate / fps;
+  // Leave room for AAC priming and packet padding at the five-minute boundary.
+  const length = Math.max(0, Math.min(frames * samplesPerFrame, (maxFrames - offset) * samplesPerFrame - 4096));
+  const duration = length / sampleRate;
   const timelineStart = offset / fps;
   let cursor = 0;
   if (track) {
