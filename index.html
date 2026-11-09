@@ -111,7 +111,15 @@ main{min-width:0}.topbar{height:68px;border-bottom:1px solid var(--border);displ
 <p class="hint" id="video-status" role="status"></p>
 <p class="hint">The draft prompt includes your shot directions and dialogue. The manuscript passage stays in the Director. Review the prompt before pasting it into a renderer.</p>
 </div></div>
-<div class="panel"><div class="panel-header"><h2>2. Generate and preview</h2></div><div class="panel-body">
+<div class="panel"><div class="panel-header"><h2>2. Render in Studio</h2></div><div class="panel-body">
+<p class="note">Make a silent animatic using your own art or the built-in backdrop. Studio adds camera motion and shot captions. Keep this tab open while it renders.</p>
+<div class="field"><label for="render-art">Reference art (optional)</label><input id="render-art" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" /></div>
+<div class="field"><label for="render-motion">Camera motion</label><select id="render-motion"><option value="push">Slow push in</option><option value="pan">Pan across</option><option value="hold">Hold</option></select></div>
+<canvas id="render-canvas" class="hidden" width="960" height="540" style="width:100%;height:auto" aria-label="Animatic render preview"></canvas>
+<div class="button-row"><button class="button" id="render-start">Render in Studio</button><button class="ghost hidden" id="render-cancel">Cancel render</button><a class="ghost label-button hidden" id="render-download">Download clip</a></div>
+<p class="hint" id="render-status" role="status">Free local rendering. No uploads or credits.</p>
+<div class="small-divider"></div>
+<h3>Generate new motion with AI</h3>
 <p class="note">Open a renderer and paste your prompt there. Choose a supported duration, add character reference art if you want, and check the renderer’s credit cost before generating.</p>
 <div class="button-row"><a class="ghost label-button" href="https://labs.google/fx/tools/flow" target="_blank" rel="noopener noreferrer">Open Google Flow</a><a class="ghost label-button" href="https://dreamina.capcut.com/tools/seedance-2-0" target="_blank" rel="noopener noreferrer">Open Dreamina Seedance</a></div>
 <div class="small-divider"></div>
@@ -191,7 +199,7 @@ function canonReport(d){const full=[d.setting,d.action,d.dialogue,d.camera,d.eff
 function prompt(d){let chars=d.characters.map(id=>cast.find(c=>c.id===id)).filter(Boolean);let report=canonReport(d);return `SEEKER STUDIO AI · ANIMATION PRODUCTION BRIEF\nSeries: Seeker's Codex: ${d.series}\nChapter/sequence: ${d.chapter||'Unspecified'}\nShot: ${String(d.number).padStart(3,'0')} — ${d.name||'Untitled'}\nFormat: ${d.provider} | Duration: ${d.duration} seconds\n\nCANON AUTHORITY\nPublished chapters are the default authority. Explicit newer author corrections supersede the specific affected detail. Preserve identity, age, power limits, injuries, and timeline. Treat missing specifications as unknown, not creative permission.\n\nCAST & HARD CONTINUITY LOCKS\n${chars.length?chars.map(c=>'• '+characterPrompt(c,d)).join('\n'):'• No identified on-screen characters.'}\n\nSCENE SETTING\n${d.setting||'(not supplied)'}\n\nON-SCREEN ACTION\n${d.action||'(must be defined from source)'}\n\nEXACT DIALOGUE / LIP SYNC\n${d.dialogue||'[No spoken line supplied. Do not invent dialogue.]'}\n\nCAMERA / ANIME COMPOSITION\n${d.camera||'Maintain legible blocking and established composition.'}\n\nAUDIO / MUSIC / ATMOSPHERE\n${d.audio||'Maintain environmental sound continuity.'}\n\nMUTI / VFX / AURA\n${d.effects||'No new techniques or unexplained energy effects.'}\n\nSECOND-BY-SECOND DIRECTOR TIMELINE\n${secsPrompt(d)}\n\nSOURCE PASSAGE\n${d.excerpt||'[Not provided. This remains a production outline, not an exact transcript.]'}\n\nNEGATIVE / QUALITY CONSTRAINTS\nNo costume drift. No gear swapping. No face drift. No unearned power escalation. No invented dialogue. No geography contradiction. No voice-identity changes. No unexplained lighting changes. No continuity jump between adjacent shots. Story timing and dramatic pauses must serve the source.\n\nCANON CHECK\n${report.problems.length?report.problems.map(x=>'⚠ '+x).join('\n'):'No contradictions detected by the limited V1 checks.'}\n${report.flags.join('\n')}`;}
 function refreshDraft(save=true){let d=readForm();state.draft=d;$('m-chapter').textContent=(d.chapter.match(/\d+/)||['—'])[0];$('provider-label').textContent=d.provider;$('stage-heading').textContent=d.name||'Untitled Production Shot';$('prompt-preview').textContent=prompt(d);let r=canonReport(d);$('canon-result').classList.toggle('warning',r.problems.length>0);$('canon-result').innerHTML=r.problems.length?'<strong>⚠ Continuity review needed</strong><div style="margin-top:6px">'+r.problems.map(safe).join('<br>')+'</div>':'<strong><span class="dot"></span> V1 targeted checks clear</strong><div style="margin-top:6px">'+safe(r.flags.join(' '))+'</div>';if(save)persist()}
 function updateMetrics(){$('m-canon').textContent=cast.length;let t=state.shots.reduce((sum,s)=>sum+Number(s.duration||0),0);$('m-scenes').textContent=state.shots.length;$('m-runtime').textContent=clock(t);$('shots-count').textContent=state.shots.length;$('shots-runtime').textContent=clock(t);$('shot-board-hint').textContent=`${state.shots.length} saved production shots`;}
-function tab(name){document.querySelectorAll('[data-page]').forEach(p=>p.classList.toggle('hidden',p.dataset.page!==name));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('breadcrumb').textContent=({studio:"Director's Desk",shots:'Shot Board',canon:'Canon Vault',voice:'Voice Lab',export:'Exports',brain:'Writing Brain',video:'Make video'})[name];if(name==='shots')renderShots();if(name==='voice')renderVoiceDirection();window.scrollTo(0,0)}
+function tab(name){if(name!=='video')cancelRender();document.querySelectorAll('[data-page]').forEach(p=>p.classList.toggle('hidden',p.dataset.page!==name));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('breadcrumb').textContent=({studio:"Director's Desk",shots:'Shot Board',canon:'Canon Vault',voice:'Voice Lab',export:'Exports',brain:'Writing Brain',video:'Make video'})[name];if(name==='shots')renderShots();if(name==='voice')renderVoiceDirection();window.scrollTo(0,0)}
 function renderShots(){updateMetrics();let sort=state.shots.slice().sort((a,b)=>a.number-b.number||a.created-b.created);$('shot-list').innerHTML=sort.length?sort.map(s=>`<div class="shot"><div class="shot-n">${String(s.number).padStart(2,'0')}</div><div><div class="shot-title">${safe(s.name||'Untitled')} <span style="color:var(--dim);font-size:10px;font-weight:500">· ${Number(s.duration)}s</span></div><div class="shot-desc">${safe(s.chapter)} · ${safe(s.characters.map(x=>(cast.find(c=>c.id===x)||{}).name||x).join(', ')||'Atmosphere shot')}<br>${safe((s.action||'').slice(0,170))}</div></div><div class="shot-tools"><button data-edit="${safe(s.id)}" title="Edit">Edit</button><button data-copy="${safe(s.id)}" title="Copy">Copy</button><button data-video="${safe(s.id)}">Video</button><button data-delete="${safe(s.id)}" title="Delete">×</button></div></div>`).join(''):'<div class="library-hint">No shots saved yet. Open Director’s Desk and save the first shot to begin the episode.</div>';document.querySelectorAll('[data-edit]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.edit);if(!s)return;editingId=s.id;setForm(s);$('save-shot').textContent='✓ Update shot';$('save-status').textContent='Editing saved shot '+s.number;tab('studio')});document.querySelectorAll('[data-copy]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.copy);if(s)copyText(prompt(s),'Shot prompt copied','shot-board-hint')});document.querySelectorAll('[data-video]').forEach(button=>button.onclick=()=>{
  const shot=state.shots.find(item=>item.id===button.dataset.video);
  if(shot)openVideo(shot,'shots');
@@ -202,6 +210,10 @@ function openVideo(shot, origin){
    $(origin==='shots'?'shot-board-hint':'save-status').textContent='Add the shot action and resolve canon warnings before preparing a video.';
    return;
  }
+ renderShot=shot;
+ releaseRenderDownload();
+ $('render-art').value='';
+ $('render-status').textContent='Free local rendering. No uploads or credits.';
  $('video-back').onclick=()=>{clearVideoPreview();tab(origin);};
  $('video-shot-name').textContent=shot.name||'Untitled shot';
  const characters=shot.characters.map(id=>cast.find(character=>character.id===id)).filter(Boolean);
@@ -242,6 +254,163 @@ function previewVideo(file){
  preview.classList.remove('hidden');
  $('video-preview-status').textContent=file.name;
 }
+let renderShot, activeRender, renderDownloadUrl;
+function releaseRenderDownload(){
+ if(renderDownloadUrl)URL.revokeObjectURL(renderDownloadUrl);
+ renderDownloadUrl=null;
+ $('render-download').removeAttribute('href');
+ $('render-download').classList.add('hidden');
+}
+function cancelRender(){
+ if(!activeRender)return;
+ activeRender.cancelled=true;
+ if(activeRender.recorder?.state==='recording')activeRender.recorder.stop();
+}
+async function loadRenderArt(file){
+ if(!file)return null;
+ if(file.size>20*1024*1024)throw Error('Choose a reference image smaller than 20 MB.');
+ const url=URL.createObjectURL(file);
+ try{
+   const img=new Image();
+   img.src=url;
+   await img.decode();
+   if(!img.naturalWidth)throw Error('The reference art is empty.');
+   return img;
+ }finally{URL.revokeObjectURL(url);}
+}
+function paintAnimatic(ctx, shot, image, motion, elapsed, seconds){
+ const {width:w,height:h}=ctx.canvas;
+ const progress=Math.min(1,elapsed/seconds);
+ const zoom=motion==='push'?1+progress*.13:motion==='pan'?1.14:1;
+ const pan=motion==='pan'?(0.5-progress)*w*.12:0;
+ ctx.save();
+ ctx.translate(w/2+pan,h/2);
+ ctx.scale(zoom,zoom);
+ ctx.translate(-w/2,-h/2);
+ if(image){
+   const scale=Math.max(w/image.naturalWidth,h/image.naturalHeight);
+   const iw=image.naturalWidth*scale, ih=image.naturalHeight*scale;
+   ctx.drawImage(image,(w-iw)/2,(h-ih)/2,iw,ih);
+ }else{
+   const sky=ctx.createLinearGradient(0,0,0,h);
+   sky.addColorStop(0,'#14122e');
+   sky.addColorStop(1,'#7c4560');
+   ctx.fillStyle=sky;
+   ctx.fillRect(0,0,w,h);
+   ctx.fillStyle='#f7acc7';
+   ctx.beginPath();
+   ctx.arc(w*.74,h*.29,54,0,Math.PI*2);
+   ctx.fill();
+   for(let layer=0;layer<2;layer++){
+     for(let i=0;i<20;i++){
+       const x=i*52+(layer?-22:0), y=h*(.57+layer*.13)-(i*29%87);
+       ctx.fillStyle=layer?'#14162a':'#362844';
+       ctx.fillRect(x,y,49,h-y);
+       ctx.beginPath();
+       ctx.moveTo(x-4,y);
+       ctx.lineTo(x+24,y-13);
+       ctx.lineTo(x+53,y);
+       ctx.fill();
+       if(layer&&i%3!==1){
+         ctx.fillStyle='#cd9a74';
+         ctx.fillRect(x+14,y+13,5,8);
+         ctx.fillRect(x+30,y+13,5,8);
+       }
+     }
+   }
+   ctx.fillStyle='#edb9c6';
+   for(let i=0;i<22;i++){
+     ctx.globalAlpha=.2+(i%4)*.12;
+     ctx.fillRect((i*139+elapsed*9)%w,(i*73+elapsed*4)%h,2,2);
+   }
+   ctx.globalAlpha=1;
+ }
+ ctx.restore();
+ const shade=ctx.createLinearGradient(0,h*.54,0,h);
+ shade.addColorStop(0,'#090a1600');
+ shade.addColorStop(1,'#090a16ee');
+ ctx.fillStyle=shade;
+ ctx.fillRect(0,h*.54,w,h*.46);
+ ctx.fillStyle='#f6dba1';
+ ctx.font='600 16px system-ui';
+ ctx.fillText('SEEKER STUDIO  /  ANIMATIC',34,h-102,w-68);
+ ctx.fillStyle='#fff';
+ ctx.font='700 33px system-ui';
+ ctx.fillText(shot.name||'Untitled shot',34,h-58,w-68);
+ ctx.font='17px system-ui';
+ ctx.fillText(shot.setting||'Scene preview',34,h-27,w-68);
+}
+async function renderAnimatic(){
+ if(activeRender||!renderShot)return;
+ const canvas=$('render-canvas'), status=$('render-status');
+ if(!canvas.captureStream||typeof MediaRecorder!=='function'){
+   status.textContent='This browser cannot record the canvas. Open Studio in a current Safari or Chrome browser.';
+   return;
+ }
+ const run={cancelled:false};
+ const shot=renderShot, seconds=Math.min(15,Math.max(1,Number(shot.duration)||10));
+ const motion=$('render-motion').value;
+ activeRender=run;
+ $('render-start').disabled=true;
+ $('render-cancel').classList.remove('hidden');
+ releaseRenderDownload();
+ let stream, frame;
+ try{
+   status.textContent='Preparing render…';
+   const art=await loadRenderArt($('render-art').files[0]);
+   if(run.cancelled)return;
+   const ctx=canvas.getContext('2d',{alpha:false});
+   if(!ctx)throw Error('Canvas drawing is unavailable.');
+   canvas.classList.remove('hidden');
+   paintAnimatic(ctx,shot,art,motion,0,seconds);
+   stream=canvas.captureStream(24);
+   const mime=['video/mp4','video/webm;codecs=vp8','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));
+   const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined);
+   run.recorder=recorder;
+   const parts=[];
+   const finished=new Promise((resolve,reject)=>{
+     recorder.ondataavailable=event=>{if(event.data.size)parts.push(event.data);};
+     recorder.onstop=resolve;
+     recorder.onerror=()=>reject(Error('The browser video encoder stopped unexpectedly.'));
+   });
+   recorder.start();
+   const start=performance.now();
+   function draw(now){
+     if(run.cancelled||recorder.state!=='recording')return;
+     const elapsed=(now-start)/1000;
+     paintAnimatic(ctx,shot,art,motion,elapsed,seconds);
+     status.textContent='Rendering '+Math.min(100,Math.floor(elapsed/seconds*100))+'%';
+     if(elapsed>=seconds)recorder.stop();
+     else frame=requestAnimationFrame(draw);
+   }
+   frame=requestAnimationFrame(draw);
+   await finished;
+   if(run.cancelled)return;
+   if(!parts.length)throw Error('The browser produced an empty recording.');
+   const type=recorder.mimeType||parts[0].type;
+   const extension=type.includes('mp4')?'mp4':'webm';
+   const filename=(shot.name||'seeker-shot').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')||'seeker-shot';
+   const clip=new File(parts,filename+'.'+extension,{type});
+   renderDownloadUrl=URL.createObjectURL(clip);
+   const link=$('render-download');
+   link.href=renderDownloadUrl;
+   link.download=clip.name;
+   link.classList.remove('hidden');
+   previewVideo(clip);
+   status.textContent='Render complete · '+seconds+' seconds · '+extension.toUpperCase();
+ }catch(error){
+   status.textContent='Render failed. '+error.message;
+ }finally{
+   cancelAnimationFrame(frame);
+   stream?.getTracks().forEach(track=>track.stop());
+   canvas.classList.add('hidden');
+   $('render-start').disabled=false;
+   $('render-cancel').classList.add('hidden');
+   activeRender=null;
+   if(run.cancelled)status.textContent='Render canceled. Keep Studio visible while it renders.';
+ }
+}
+
 function clearEditing(){editingId=null;$('save-shot').textContent='+ Save shot';$('save-status').textContent=''}
 function newShot(overrides={}){
  const {series,chapter,provider,duration}=readForm();
@@ -267,6 +436,9 @@ function init(){renderCanon();makeChips(state.draft.characters||[]);setForm(stat
    if(prompt)copyText(prompt,'Video prompt copied','video-status');
  };
  $('video-file').onchange=event=>previewVideo(event.target.files[0]);
+ $('render-start').onclick=renderAnimatic;
+ $('render-cancel').onclick=cancelRender;
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelRender();});
  $('video-preview').onerror=()=>{
    if(videoPreviewUrl)$('video-preview-status').textContent='This browser could not play that file. Try an MP4 export.';
  };
