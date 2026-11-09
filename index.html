@@ -119,9 +119,12 @@ main{min-width:0}.topbar{height:68px;border-bottom:1px solid var(--border);displ
 <div class="button-row"><button class="button" id="render-start">Render in Studio</button><button class="ghost hidden" id="render-cancel">Cancel render</button><a class="ghost label-button hidden" id="render-download">Download clip</a></div>
 <p class="hint" id="render-status" role="status">Free local rendering. No uploads or credits.</p>
 <div class="small-divider"></div>
-<h3>Generate new motion with AI</h3>
-<p class="note">Open a renderer and paste your prompt there. Choose a supported duration, add character reference art if you want, and check the renderer’s credit cost before generating.</p>
-<div class="button-row"><a class="ghost label-button" href="https://labs.google/fx/tools/flow" target="_blank" rel="noopener noreferrer">Open Google Flow</a><a class="ghost label-button" href="https://dreamina.capcut.com/tools/seedance-2-0" target="_blank" rel="noopener noreferrer">Open Dreamina Seedance</a></div>
+<h3>Generate with AI · Free GPU queue</h3>
+<p class="note">LTX Video creates new frames from the prompt above. Add reference art above to guide character design. A shared GPU runs the model and free capacity can run out.</p>
+<div class="field"><label for="ai-video-length">AI clip length</label><select id="ai-video-length"><option value="3">3 seconds</option><option value="5">5 seconds</option></select></div>
+<label class="check"><input type="checkbox" id="ai-video-consent" /> Send this prompt and any selected reference art to the public Lightricks GPU service. Use material you’re comfortable sharing there.</label>
+<button class="button" id="ai-video-start">Generate AI clip</button>
+<p class="hint" id="ai-video-status" role="status">No API key or paid account required by Studio.</p>
 <div class="small-divider"></div>
 <div class="field"><label for="video-file">Preview your downloaded clip</label><input type="file" id="video-file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" /></div>
 <p class="hint" id="video-preview-status" role="status">Playback uses the file on your device.</p>
@@ -151,7 +154,7 @@ main{min-width:0}.topbar{height:68px;border-bottom:1px solid var(--border);displ
 </section>
 <section data-page="export" class="hidden">
 <div class="page-head"><div><div class="eyebrow">HANDOFF & BACKUPS</div><h1>Production Exports<span style="color:var(--gold)">.</span></h1><p>Save shot lists and prompts for your animation pipeline or back up the project before changing browsers.</p></div></div>
-<div class="workspace"><div class="panel"><div class="panel-header"><h2>Download deliverables</h2></div><div class="panel-body"><p class="sect-title">Editable project data</p><p class="note">JSON stores your shots and draft, suitable for re-importing into this app. Keep private chapter text secure.</p><div class="button-row"><button class="button" id="export-json">Download project JSON</button><button class="ghost" id="export-txt">Download prompt pack TXT</button></div><div class="small-divider"></div><p class="sect-title">Restore a project</p><div class="field"><label for="import-json">Select your saved JSON backup</label><input type="file" id="import-json" accept=".json,application/json" /></div><div id="import-status" class="hint" role="status" aria-live="polite">Import replaces the current workspace. Export a backup first.</div></div></div><div class="panel"><div class="panel-header"><h2>Future integrations</h2></div><div class="panel-body"><div class="check"><span style="color:var(--gold)">01</span><span>Source-aware LLM writing assistant (available under Writing Brain with author-supplied key)</span></div><div class="check"><span style="color:var(--gold)">02</span><span>Image references, character model sheets and wardrobe locks</span></div><div class="check"><span style="color:var(--gold)">03</span><span>Veo and Seedance rendering via the Make video handoff</span></div><div class="check"><span style="color:var(--gold)">04</span><span>Recorded or licensed voices with stable character casting</span></div><div class="check"><span style="color:var(--gold)">05</span><span>Automated visual/audio QC and assembly into episodes</span></div><div class="notice" style="margin-top:13px">Never hard-code provider keys into public HTML or JavaScript. V2 accepts a temporary key in the open browser session; for production or team access, use a secured server-side proxy.</div></div></div></div>
+<div class="workspace"><div class="panel"><div class="panel-header"><h2>Download deliverables</h2></div><div class="panel-body"><p class="sect-title">Editable project data</p><p class="note">JSON stores your shots and draft, suitable for re-importing into this app. Keep private chapter text secure.</p><div class="button-row"><button class="button" id="export-json">Download project JSON</button><button class="ghost" id="export-txt">Download prompt pack TXT</button></div><div class="small-divider"></div><p class="sect-title">Restore a project</p><div class="field"><label for="import-json">Select your saved JSON backup</label><input type="file" id="import-json" accept=".json,application/json" /></div><div id="import-status" class="hint" role="status" aria-live="polite">Import replaces the current workspace. Export a backup first.</div></div></div><div class="panel"><div class="panel-header"><h2>Future integrations</h2></div><div class="panel-body"><div class="check"><span style="color:var(--gold)">01</span><span>Source-aware LLM writing assistant (available under Writing Brain with author-supplied key)</span></div><div class="check"><span style="color:var(--gold)">02</span><span>Image references, character model sheets and wardrobe locks</span></div><div class="check"><span style="color:var(--gold)">03</span><span>Free AI video generation via the shared GPU queue</span></div><div class="check"><span style="color:var(--gold)">04</span><span>Recorded or licensed voices with stable character casting</span></div><div class="check"><span style="color:var(--gold)">05</span><span>Automated visual/audio QC and assembly into episodes</span></div><div class="notice" style="margin-top:13px">Never hard-code provider keys into public HTML or JavaScript. V2 accepts a temporary key in the open browser session; for production or team access, use a secured server-side proxy.</div></div></div></div>
 </section>
 <footer>Seeker Studio AI V3 · Author-controlled production planner · Local manuscript library · Optional AI provider connection</footer>
 </div></main></div>
@@ -199,7 +202,7 @@ function canonReport(d){const full=[d.setting,d.action,d.dialogue,d.camera,d.eff
 function prompt(d){let chars=d.characters.map(id=>cast.find(c=>c.id===id)).filter(Boolean);let report=canonReport(d);return `SEEKER STUDIO AI · ANIMATION PRODUCTION BRIEF\nSeries: Seeker's Codex: ${d.series}\nChapter/sequence: ${d.chapter||'Unspecified'}\nShot: ${String(d.number).padStart(3,'0')} — ${d.name||'Untitled'}\nFormat: ${d.provider} | Duration: ${d.duration} seconds\n\nCANON AUTHORITY\nPublished chapters are the default authority. Explicit newer author corrections supersede the specific affected detail. Preserve identity, age, power limits, injuries, and timeline. Treat missing specifications as unknown, not creative permission.\n\nCAST & HARD CONTINUITY LOCKS\n${chars.length?chars.map(c=>'• '+characterPrompt(c,d)).join('\n'):'• No identified on-screen characters.'}\n\nSCENE SETTING\n${d.setting||'(not supplied)'}\n\nON-SCREEN ACTION\n${d.action||'(must be defined from source)'}\n\nEXACT DIALOGUE / LIP SYNC\n${d.dialogue||'[No spoken line supplied. Do not invent dialogue.]'}\n\nCAMERA / ANIME COMPOSITION\n${d.camera||'Maintain legible blocking and established composition.'}\n\nAUDIO / MUSIC / ATMOSPHERE\n${d.audio||'Maintain environmental sound continuity.'}\n\nMUTI / VFX / AURA\n${d.effects||'No new techniques or unexplained energy effects.'}\n\nSECOND-BY-SECOND DIRECTOR TIMELINE\n${secsPrompt(d)}\n\nSOURCE PASSAGE\n${d.excerpt||'[Not provided. This remains a production outline, not an exact transcript.]'}\n\nNEGATIVE / QUALITY CONSTRAINTS\nNo costume drift. No gear swapping. No face drift. No unearned power escalation. No invented dialogue. No geography contradiction. No voice-identity changes. No unexplained lighting changes. No continuity jump between adjacent shots. Story timing and dramatic pauses must serve the source.\n\nCANON CHECK\n${report.problems.length?report.problems.map(x=>'⚠ '+x).join('\n'):'No contradictions detected by the limited V1 checks.'}\n${report.flags.join('\n')}`;}
 function refreshDraft(save=true){let d=readForm();state.draft=d;$('m-chapter').textContent=(d.chapter.match(/\d+/)||['—'])[0];$('provider-label').textContent=d.provider;$('stage-heading').textContent=d.name||'Untitled Production Shot';$('prompt-preview').textContent=prompt(d);let r=canonReport(d);$('canon-result').classList.toggle('warning',r.problems.length>0);$('canon-result').innerHTML=r.problems.length?'<strong>⚠ Continuity review needed</strong><div style="margin-top:6px">'+r.problems.map(safe).join('<br>')+'</div>':'<strong><span class="dot"></span> V1 targeted checks clear</strong><div style="margin-top:6px">'+safe(r.flags.join(' '))+'</div>';if(save)persist()}
 function updateMetrics(){$('m-canon').textContent=cast.length;let t=state.shots.reduce((sum,s)=>sum+Number(s.duration||0),0);$('m-scenes').textContent=state.shots.length;$('m-runtime').textContent=clock(t);$('shots-count').textContent=state.shots.length;$('shots-runtime').textContent=clock(t);$('shot-board-hint').textContent=`${state.shots.length} saved production shots`;}
-function tab(name){if(name!=='video')cancelRender();document.querySelectorAll('[data-page]').forEach(p=>p.classList.toggle('hidden',p.dataset.page!==name));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('breadcrumb').textContent=({studio:"Director's Desk",shots:'Shot Board',canon:'Canon Vault',voice:'Voice Lab',export:'Exports',brain:'Writing Brain',video:'Make video'})[name];if(name==='shots')renderShots();if(name==='voice')renderVoiceDirection();window.scrollTo(0,0)}
+function tab(name){if(name!=='video'){cancelRender();aiVideoRequest?.abort();}document.querySelectorAll('[data-page]').forEach(p=>p.classList.toggle('hidden',p.dataset.page!==name));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('breadcrumb').textContent=({studio:"Director's Desk",shots:'Shot Board',canon:'Canon Vault',voice:'Voice Lab',export:'Exports',brain:'Writing Brain',video:'Make video'})[name];if(name==='shots')renderShots();if(name==='voice')renderVoiceDirection();window.scrollTo(0,0)}
 function renderShots(){updateMetrics();let sort=state.shots.slice().sort((a,b)=>a.number-b.number||a.created-b.created);$('shot-list').innerHTML=sort.length?sort.map(s=>`<div class="shot"><div class="shot-n">${String(s.number).padStart(2,'0')}</div><div><div class="shot-title">${safe(s.name||'Untitled')} <span style="color:var(--dim);font-size:10px;font-weight:500">· ${Number(s.duration)}s</span></div><div class="shot-desc">${safe(s.chapter)} · ${safe(s.characters.map(x=>(cast.find(c=>c.id===x)||{}).name||x).join(', ')||'Atmosphere shot')}<br>${safe((s.action||'').slice(0,170))}</div></div><div class="shot-tools"><button data-edit="${safe(s.id)}" title="Edit">Edit</button><button data-copy="${safe(s.id)}" title="Copy">Copy</button><button data-video="${safe(s.id)}">Video</button><button data-delete="${safe(s.id)}" title="Delete">×</button></div></div>`).join(''):'<div class="library-hint">No shots saved yet. Open Director’s Desk and save the first shot to begin the episode.</div>';document.querySelectorAll('[data-edit]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.edit);if(!s)return;editingId=s.id;setForm(s);$('save-shot').textContent='✓ Update shot';$('save-status').textContent='Editing saved shot '+s.number;tab('studio')});document.querySelectorAll('[data-copy]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.copy);if(s)copyText(prompt(s),'Shot prompt copied','shot-board-hint')});document.querySelectorAll('[data-video]').forEach(button=>button.onclick=()=>{
  const shot=state.shots.find(item=>item.id===button.dataset.video);
  if(shot)openVideo(shot,'shots');
@@ -211,6 +214,8 @@ function openVideo(shot, origin){
    return;
  }
  renderShot=shot;
+ $('ai-video-consent').checked=false;
+ $('ai-video-status').textContent='No API key or paid account required by Studio.';
  releaseRenderDownload();
  $('render-art').value='';
  $('render-status').textContent='Free local rendering. No uploads or credits.';
@@ -341,7 +346,7 @@ function paintAnimatic(ctx, shot, image, motion, elapsed, seconds){
  ctx.fillText(shot.setting||'Scene preview',34,h-27,w-68);
 }
 async function renderAnimatic(){
- if(activeRender||!renderShot)return;
+ if(activeRender||aiVideoRequest||!renderShot)return;
  const canvas=$('render-canvas'), status=$('render-status');
  if(!canvas.captureStream||typeof MediaRecorder!=='function'){
    status.textContent='This browser cannot record the canvas. Open Studio in a current Safari or Chrome browser.';
@@ -377,7 +382,7 @@ async function renderAnimatic(){
    const start=performance.now();
    function draw(now){
      if(run.cancelled||recorder.state!=='recording')return;
-     const elapsed=(now-start)/1000;
+     const elapsed=Math.max(0,(now-start)/1000);
      paintAnimatic(ctx,shot,art,motion,elapsed,seconds);
      status.textContent='Rendering '+Math.min(100,Math.floor(elapsed/seconds*100))+'%';
      if(elapsed>=seconds)recorder.stop();
@@ -411,6 +416,86 @@ async function renderAnimatic(){
  }
 }
 
+const sharedGpu='https://lightricks-ltx-video-distilled.hf.space';
+let aiVideoRequest;
+async function generateAiVideo(){
+ if(aiVideoRequest||activeRender)return;
+ const status=$('ai-video-status'), button=$('ai-video-start');
+ const prompt=$('video-prompt').value.trim();
+ const art=$('render-art').files[0];
+ if(!prompt||prompt.length>5000){status.textContent='Enter a prompt between 1 and 5,000 characters.';return;}
+ if(!$('ai-video-consent').checked){status.textContent='Confirm that you want to send the prompt and any selected art to the shared GPU.';return;}
+ if(art&&art.size>10*1024*1024){status.textContent='Choose reference art under 10 MB.';return;}
+ const controller=new AbortController();
+ aiVideoRequest=controller;
+ const signal=controller.signal;
+ const timeout=setTimeout(()=>controller.abort('timeout'),240000);
+ button.disabled=true;
+ $('render-start').disabled=true;
+ $('ai-video-consent').checked=false;
+ clearVideoPreview();
+ releaseRenderDownload();
+ try{
+   async function request(path,options={}){
+     const response=await fetch(sharedGpu+'/gradio_api/'+path,{...options,signal,credentials:'omit'});
+     if(!response.ok){
+       if([401,402,403,429].includes(response.status))throw Error('The shared GPU is unavailable to this session or its free quota is exhausted.');
+       throw Error('The shared GPU returned HTTP '+response.status+'.');
+     }
+     return response;
+   }
+   let reference=null;
+   if(art){
+     status.textContent='Uploading the selected reference art…';
+     const body=new FormData();
+     body.append('files',art);
+     const [path]=await (await request('upload',{method:'POST',body})).json();
+     if(typeof path!=='string'||!path)throw Error('The GPU could not read the reference art.');
+     reference={path,meta:{_type:'gradio.FileData'}};
+   }
+   status.textContent='Submitting to the free GPU queue…';
+   const endpoint=art?'image_to_video':'text_to_video';
+   const mode=art?'image-to-video':'text-to-video';
+   const data=[prompt,'blurry, jitter, warped hands, character design drift, unwanted text',reference,null,416,736,mode,Number($('ai-video-length').value),9,42,true,3,true];
+   const job=await (await request('call/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})})).json();
+   if(typeof job.event_id!=='string'||!job.event_id)throw Error('The shared GPU did not return a job ID.');
+   status.textContent='Waiting for the shared GPU to generate your clip…';
+   const events=await (await request('call/'+endpoint+'/'+encodeURIComponent(job.event_id))).text();
+   const completed=events.split(/\r?\n\r?\n/).find(event=>/^event: complete\s*$/m.test(event));
+   if(!completed){
+     const failure=events.split(/\r?\n\r?\n/).find(event=>/^event: error\s*$/m.test(event));
+     const message=failure?.match(/^data: (.+)$/m)?.[1];
+     throw Error(message&&message!=='null'?'Shared GPU: '+message.slice(0,220):'The queue ended without a video. Free capacity may be unavailable.');
+   }
+   const result=JSON.parse(completed.match(/^data: (.+)$/m)?.[1]||'null');
+   const file=result?.[0]?.video||result?.[0];
+   if(!file?.url&&!file?.path)throw Error('The model did not return a video file.');
+   const url=new URL(file.url||'/gradio_api/file='+file.path,sharedGpu);
+   if(url.origin!==sharedGpu)throw Error('The GPU returned an unexpected file host.');
+   const response=await fetch(url,{signal,credentials:'omit'});
+   if(!response.ok)throw Error('The video file could not be downloaded.');
+   const video=await response.blob();
+   if(!video.size||!video.type.startsWith('video/'))throw Error('The response was not a playable video.');
+   const clip=new File([video],'seeker-ai-clip.mp4',{type:video.type});
+   renderDownloadUrl=URL.createObjectURL(clip);
+   const link=$('render-download');
+   link.href=renderDownloadUrl;
+   link.download=clip.name;
+   link.classList.remove('hidden');
+   previewVideo(clip);
+   status.textContent='AI clip ready. Preview it below or download it.';
+ }catch(error){
+   if(signal.aborted){
+     if(signal.reason==='timeout')status.textContent='The free GPU queue timed out. Try again later.';
+   }else status.textContent='Generation failed. '+(error instanceof TypeError?'The shared GPU could not be reached from this browser.':error.message);
+ }finally{
+   clearTimeout(timeout);
+   aiVideoRequest=null;
+   button.disabled=false;
+   $('render-start').disabled=false;
+ }
+}
+
 function clearEditing(){editingId=null;$('save-shot').textContent='+ Save shot';$('save-status').textContent=''}
 function newShot(overrides={}){
  const {series,chapter,provider,duration}=readForm();
@@ -437,6 +522,7 @@ function init(){renderCanon();makeChips(state.draft.characters||[]);setForm(stat
  };
  $('video-file').onchange=event=>previewVideo(event.target.files[0]);
  $('render-start').onclick=renderAnimatic;
+ $('ai-video-start').onclick=generateAiVideo;
  $('render-cancel').onclick=cancelRender;
  document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelRender();});
  $('video-preview').onerror=()=>{
