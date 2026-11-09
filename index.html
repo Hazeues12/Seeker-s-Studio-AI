@@ -8,73 +8,146 @@
 <style>
 :root{--bg:#090c16;--panel:#111624;--panel2:#171d2e;--panel3:#20283b;--border:#2c3448;--text:#f3f4fb;--muted:#a1adc5;--dim:#697791;--gold:#e9b868;--gold2:#f6dba1;--aqua:#6de0d3;--red:#ff8797;--blue:#829bff;--radius:17px;--shadow:0 16px 40px #02040d6e;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
 *{box-sizing:border-box}body{background:var(--bg);color:var(--text);margin:0;min-height:100vh;font-size:14px}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:var(--gold)}
-.shell{min-height:100vh;display:grid;grid-template-columns:234px minmax(0,1fr)}.sidebar{padding:22px 16px;background:#0d1220;border-right:1px solid #253049;display:flex;flex-direction:column;gap:18px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:2px 6px}.brand-mark{width:42px;height:42px;border:1px solid #a99056;border-radius:14px;display:grid;place-items:center;color:var(--gold);font-size:25px;font-family:Georgia,serif;box-shadow:inset 0 0 15px #7e60222f;background:#202032}.brand-name{letter-spacing:.12em;font-size:14px;font-weight:800}.brand-sub{font-size:10px;color:var(--muted);letter-spacing:.12em;margin-top:4px}.side-label,.eyebrow{font-size:10px;color:var(--dim);letter-spacing:.18em;font-weight:800;text-transform:uppercase}.side-label{margin:8px 12px}.nav{display:flex;flex-direction:column;gap:5px}.nav button{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:13px 12px;border-radius:11px;border:1px solid transparent;background:transparent;color:var(--muted);font-weight:600}.nav button.active{background:#25283c;border-color:#474059;color:var(--gold2)}.nav button:hover{background:#20283a}.nav .symbol{font-size:19px;line-height:1;width:20px;text-align:center}.side-bottom{margin-top:auto;border-top:1px solid #2b3448;padding:17px 6px 0;color:var(--muted);font-size:12px}.status-indicator{width:7px;height:7px;background:var(--aqua);border-radius:50%;display:inline-block;margin-right:8px;box-shadow:0 0 10px #66ecce}
-main{min-width:0}.topbar{height:68px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,3vw,44px);gap:12px}.breadcrumbs{color:var(--muted);font-size:13px}.breadcrumbs strong{color:var(--text)}.topbadge{border:1px solid #5b503f;color:#f6d69d;background:#352b2266;padding:8px 12px;border-radius:100px;font-size:11px;font-weight:750;letter-spacing:.045em}.container{max-width:1440px;margin:auto;padding:28px clamp(16px,3vw,44px) 70px}.page-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:24px}.page-head h1{font-size:clamp(29px,3.2vw,42px);letter-spacing:-.045em;margin:6px 0 8px;font-weight:800}.page-head p{color:var(--muted);font-size:13px;margin:0;line-height:1.55;max-width:780px}.button,.ghost,.mini{border-radius:10px;border:1px solid #5b5260;background:linear-gradient(130deg,#f0d39b,#cd9850);color:#211a13;font-weight:800;padding:12px 16px;white-space:nowrap;transition:transform .1s,border-color .2s}.button:hover,.ghost:hover,.mini:hover{transform:translateY(-1px)}.button:focus-visible,.ghost:focus-visible,.mini:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.ghost{color:var(--text);background:#22293a;border-color:#3c465e}.mini{padding:8px 10px;font-size:11px}.button-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
-.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.metric{padding:18px;background:linear-gradient(145deg,#1b2132,#131a29);border:1px solid var(--border);border-radius:14px}.metric-value{font-size:29px;font-weight:800;letter-spacing:-.04em;margin-top:6px}.metric-label{font-size:12px;color:var(--muted)}.metric .accent{color:var(--gold)}
+.shell{min-height:100vh;display:grid;grid-template-columns:186px minmax(0,1fr)}.sidebar{padding:22px 16px;background:#0d1220;border-right:1px solid #253049;display:flex;flex-direction:column;gap:18px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:2px 6px}.brand-mark{width:42px;height:42px;border:1px solid #a99056;border-radius:14px;display:grid;place-items:center;color:var(--gold);font-size:25px;font-family:Georgia,serif;box-shadow:inset 0 0 15px #7e60222f;background:#202032}.brand-name{letter-spacing:.12em;font-size:14px;font-weight:800}.eyebrow{font-size:10px;color:var(--dim);letter-spacing:.18em;font-weight:800;text-transform:uppercase}.nav{display:flex;flex-direction:column;gap:5px}.nav button{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:13px 12px;border-radius:11px;border:1px solid transparent;background:transparent;color:var(--muted);font-weight:600}.nav button.active{background:#25283c;border-color:#474059;color:var(--gold2)}.nav button:hover{background:#20283a}
+main{min-width:0}.container{max-width:1440px;margin:auto;padding:28px clamp(16px,3vw,44px) 70px}.page-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:24px}.page-head h1{font-size:clamp(29px,3.2vw,42px);letter-spacing:-.045em;margin:6px 0 8px;font-weight:800}.page-head p{color:var(--muted);font-size:13px;margin:0;line-height:1.55;max-width:780px}.button,.ghost,.mini{border-radius:10px;border:1px solid #5b5260;background:linear-gradient(130deg,#f0d39b,#cd9850);color:#211a13;font-weight:800;padding:12px 16px;white-space:nowrap;transition:transform .1s,border-color .2s}.button:hover,.ghost:hover,.mini:hover{transform:translateY(-1px)}.button:focus-visible,.ghost:focus-visible,.mini:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.ghost{color:var(--text);background:#22293a;border-color:#3c465e}.mini{padding:8px 10px;font-size:11px}.button-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+
 .workspace{display:grid;grid-template-columns:minmax(0,1.07fr) minmax(320px,.93fr);gap:16px;align-items:start}.panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 5px 20px #05070d20}.panel-body{padding:22px}.panel-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding:17px 22px;gap:10px}.panel-header h2{font-size:15px;margin:0;letter-spacing:-.01em}.panel-header small{color:var(--muted);font-size:11px}.sect-title{font-weight:800;font-size:12px;margin:17px 0 9px;letter-spacing:.01em}.field{margin-bottom:15px}.field label{display:block;color:#b7c3d8;font-weight:650;font-size:12px;margin-bottom:7px}.field input,.field select,.field textarea,.inline-select{width:100%;background:#0c1220;border:1px solid #39445a;color:#f7f7fa;padding:12px;border-radius:10px;outline:none}.field textarea{resize:vertical;line-height:1.55;min-height:82px}.field input::placeholder,.field textarea::placeholder{color:#687891}.fields-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.hint{font-size:11px;color:var(--dim);line-height:1.55;margin-top:5px}.chiprow{display:flex;gap:7px;flex-wrap:wrap}.chip{font-size:12px;color:var(--muted);background:#1b2435;border:1px solid #3a465b;padding:8px 11px;border-radius:999px}.chip.selected{background:#59493455;color:#ffdf9f;border-color:#b1854e}.chip input{display:none}
-.stage{height:210px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:22px;background:radial-gradient(circle at 75% 20%,#c5889a4d,transparent 23%),radial-gradient(circle at 67% 40%,#657cab33,transparent 34%),linear-gradient(160deg,#181c37 0%,#252d4a 42%,#101724 100%)}.stage::before{content:"";position:absolute;inset:45% 0 0;background:repeating-linear-gradient(90deg,#1e3042aa 0 36px,#151d2aee 36px 48px,#27374999 48px 89px);clip-path:polygon(0 45%,8% 18%,16% 42%,24% 0,31% 33%,42% 9%,51% 46%,64% 8%,73% 39%,79% 0,88% 37%,100% 10%,100% 100%,0 100%);opacity:.8}.stage::after{content:"";position:absolute;right:23%;top:21px;border-radius:50%;height:65px;width:65px;background:#f1a9c79c;box-shadow:0 0 40px #d68ca05e}.stage-copy{position:relative;z-index:1;text-shadow:0 2px 15px #000}.stage-overline{font-size:10px;color:#f3cc9c;letter-spacing:.19em;font-weight:800}.stage-heading{font-family:Georgia,serif;font-size:26px;line-height:1.1;margin:7px 0 0}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.preview-text{background:#0b1120;border:1px solid #2a3549;border-radius:11px;padding:15px;color:#d4def1;font-size:11.5px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;max-height:490px;overflow:auto}.section-split{border-top:1px solid var(--border);margin:20px -22px;padding:20px 22px 0}.note{font-size:12px;line-height:1.6;color:var(--muted)}.notice{padding:13px;border-radius:10px;border:1px solid #46615e;background:#14363156;color:#c3f3e8;font-size:12px;line-height:1.6}.warning{background:#3f243055;border-color:#85505f;color:#ffd2d9}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--aqua);margin-right:8px}
+.stage{height:210px;position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:22px;background:radial-gradient(circle at 75% 20%,#c5889a4d,transparent 23%),radial-gradient(circle at 67% 40%,#657cab33,transparent 34%),linear-gradient(160deg,#181c37 0%,#252d4a 42%,#101724 100%)}.stage::before{content:"";position:absolute;inset:45% 0 0;background:repeating-linear-gradient(90deg,#1e3042aa 0 36px,#151d2aee 36px 48px,#27374999 48px 89px);clip-path:polygon(0 45%,8% 18%,16% 42%,24% 0,31% 33%,42% 9%,51% 46%,64% 8%,73% 39%,79% 0,88% 37%,100% 10%,100% 100%,0 100%);opacity:.8}.stage::after{content:"";position:absolute;right:23%;top:21px;border-radius:50%;height:65px;width:65px;background:#f1a9c79c;box-shadow:0 0 40px #d68ca05e}.stage-copy{position:relative;z-index:1;text-shadow:0 2px 15px #000}.stage-overline{font-size:10px;color:#f3cc9c;letter-spacing:.19em;font-weight:800}.stage-heading{font-family:Georgia,serif;font-size:26px;line-height:1.1;margin:7px 0 0}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.preview-text{background:#0b1120;border:1px solid #2a3549;border-radius:11px;padding:15px;color:#d4def1;font-size:11.5px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;max-height:490px;overflow:auto}.note{font-size:12px;line-height:1.6;color:var(--muted)}.notice{padding:13px;border-radius:10px;border:1px solid #46615e;background:#14363156;color:#c3f3e8;font-size:12px;line-height:1.6}.warning{background:#3f243055;border-color:#85505f;color:#ffd2d9}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--aqua);margin-right:8px}
 .library-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.character{padding:17px;background:var(--panel);border:1px solid var(--border);border-radius:15px;min-width:0}.char-top{display:flex;align-items:center;gap:10px}.avatar{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-family:Georgia,serif;font-size:21px;color:#ffe0aa;background:linear-gradient(130deg,#514354,#181e31);border:1px solid #74614f}.char-name{font-weight:800;font-size:15px}.char-role{font-size:11px;color:var(--muted);margin-top:3px}.char-notes{font-size:12px;color:#c2cce0;line-height:1.65;min-height:80px;margin-top:14px}.pill{display:inline-block;font-size:10px;border:1px solid #796646;color:var(--gold2);padding:5px 8px;border-radius:100px;background:#2d271d;margin-top:8px}.library-hint{background:#161d2d;padding:15px;margin-bottom:16px;border:1px solid var(--border);border-radius:12px;color:#b9c6dc;line-height:1.6;font-size:12px}
 .shot-list{display:flex;flex-direction:column;gap:10px}.shot{display:grid;grid-template-columns:60px minmax(0,1fr) auto;align-items:center;gap:12px;background:#151c2c;border:1px solid #303b50;border-radius:12px;padding:13px}.shot-n{font-size:21px;color:var(--gold);font-family:Georgia,serif;text-align:center}.shot-title{font-size:13px;font-weight:750;margin-bottom:4px}.shot-desc{font-size:11px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}.shot-tools{display:flex;gap:5px}.shot-tools button{padding:6px 8px;border:1px solid #444d5e;background:#222b3e;border-radius:8px;color:#dce5f4}.summary-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.transcript{font-size:12px;background:#0d1220;color:#becce5;border:1px solid #353f53;padding:14px;border-radius:10px;white-space:pre-wrap;line-height:1.65;min-height:90px}
-.hidden{display:none!important}footer{padding:20px 0;color:#8491a9;font-size:11px;line-height:1.5}.check{font-size:12px;display:flex;gap:8px;align-items:start;margin:8px 0;color:var(--muted)}.check input{accent-color:#d9af71;margin-top:2px}.small-divider{height:1px;background:var(--border);margin:16px 0}
-@media(max-width:1100px){.library-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace{grid-template-columns:1fr}.stage{height:175px}}@media(max-width:730px){.shell{grid-template-columns:1fr}.sidebar{padding:8px 14px 10px;position:sticky;top:0;z-index:10;gap:6px;box-shadow:0 7px 25px #0007}.brand{margin:2px 0;gap:10px}.brand-mark{width:32px;height:32px;font-size:18px;border-radius:10px}.brand-name{font-size:12px}.brand-sub{font-size:8px}.side-label,.side-bottom{display:none}.nav{flex-direction:row;overflow-x:auto;padding-bottom:2px;gap:3px}.nav button{padding:10px 9px;white-space:nowrap;justify-content:center;gap:5px;font-size:11px}.nav .symbol{font-size:14px;width:auto}.topbar{height:48px}.container{padding:22px 14px 38px}.page-head{align-items:start}.page-head h1{font-size:29px}.page-head .button{display:none}.metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.metric{padding:13px}.metric-value{font-size:25px}.panel-body{padding:16px}.panel-header{padding:15px}.section-split{margin:20px -16px;padding:20px 16px 0}.fields-2{grid-template-columns:1fr}.library-grid{grid-template-columns:1fr}.shot{grid-template-columns:37px 1fr;gap:8px}.shot-tools{grid-column:2}.stage{height:165px}.topbadge{padding:6px 8px;font-size:9px}}
+.hidden{display:none!important}.check{font-size:12px;display:flex;gap:8px;align-items:start;margin:8px 0;color:var(--muted)}.check input{accent-color:#d9af71;margin-top:2px}.small-divider{height:1px;background:var(--border);margin:16px 0}
+@media(max-width:1100px){.library-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace{grid-template-columns:1fr}.stage{height:175px}}@media(max-width:730px){.shell{grid-template-columns:1fr}.sidebar{padding:8px 14px 10px;position:sticky;top:0;z-index:10;gap:6px;box-shadow:0 7px 25px #0007}.brand{margin:2px 0;gap:10px}.brand-mark{width:32px;height:32px;font-size:18px;border-radius:10px}.brand-name{font-size:12px}.nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}.nav button{justify-content:center;min-width:0;font-size:13px;padding:9px 4px}.container{padding:22px 14px 38px}.page-head{align-items:start}.page-head h1{font-size:29px}.panel-body{padding:16px}.panel-header{padding:15px}.fields-2{grid-template-columns:1fr}.library-grid{grid-template-columns:1fr}.shot{grid-template-columns:37px 1fr;gap:8px}.shot-tools{grid-column:2}.stage{height:165px}}
 /* V2 · Writing Brain */
-.brain-hero{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid #604d39;background:radial-gradient(circle at 96% 5%,#a66d3c36,transparent 30%),linear-gradient(135deg,#242035,#151c2f);padding:21px 22px;border-radius:17px;margin-bottom:16px}
-.brain-hero .note{max-width:780px}.brain-stamp{flex-shrink:0;border-radius:999px;padding:10px 13px;background:#332f30;border:1px solid #68543d;color:var(--gold2);font-size:12px;font-weight:750}
-.brain-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px;align-items:start}.brain-editor{min-height:260px!important;font-family:Georgia,serif;font-size:14px!important;line-height:1.8!important}.brain-question{min-height:112px!important}.brain-cap{background:#132f3055;border:1px solid #315e5b;border-radius:12px;padding:13px;margin-bottom:20px;color:#ccf5e8}.brain-cap .hint{color:#a9c9c7}
+
+
+.brain-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px;align-items:start}.brain-editor{min-height:260px!important;font-family:Georgia,serif;font-size:14px!important;line-height:1.8!important}.brain-question{min-height:112px!important}
 .brain-list{display:flex;flex-direction:column;gap:7px;max-height:360px;overflow:auto}.brain-doc{display:flex;align-items:center;gap:8px;border:1px solid #3b4358;border-radius:11px;background:#151d2d;padding:10px}.brain-doc.active{border-color:#bf975c;background:#2d2b32}.brain-doc-name{flex:1;min-width:0;cursor:pointer}.brain-doc-title{color:#eaeef8;font-size:12px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brain-doc-meta{color:var(--muted);font-size:10px;margin-top:4px}.brain-del{border:1px solid #594052;background:#33222e;color:#ffd5e4;border-radius:8px;padding:5px 8px}.brain-sources{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:13px}.brain-source{border:1px solid #48465b;border-radius:9px;padding:7px 9px;color:#e2dfd6;background:#2a2831;font-size:10px}.brain-answer{min-height:195px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75;font-size:13px;background:#0b1120;color:#e1e7f5;border:1px solid #333d53;padding:18px;border-radius:12px;max-height:690px;overflow:auto}.brain-consent{background:#111725;border:1px solid #364156;border-radius:10px;padding:10px 12px;font-size:12px;color:#d0d9e9;line-height:1.55}.brain-consent input{accent-color:#e9b868;margin-right:4px}.resource-link{font-size:12px;padding:8px 3px}.label-button{display:inline-flex;align-items:center;cursor:pointer}
 @media(max-width:1100px){.brain-grid{grid-template-columns:1fr}}
-@media(max-width:730px){.brain-hero{align-items:start;flex-direction:column;padding:17px}.brain-stamp{font-size:11px}.brain-editor{min-height:230px!important}.brain-answer{padding:12px}}
+@media(max-width:730px){.brain-editor{min-height:230px!important}.brain-answer{padding:12px}}
 
 .studio-options{margin:12px 0;padding:10px 12px;border:1px solid var(--border);border-radius:10px}
 .studio-options summary{cursor:pointer;color:var(--gold2);font-size:14px;font-weight:600}
 .studio-options[open] summary{margin-bottom:12px}
-#brain-result{scroll-margin-top:160px}
+#brain-result,#video-result{scroll-margin-top:110px}
+.nav button,.nav-more summary{min-height:44px}
+.nav-more{position:relative;min-width:0}
+.nav-more summary{display:flex;align-items:center;gap:7px;padding:10px 12px;border:1px solid transparent;border-radius:11px;color:var(--muted);font-weight:600;cursor:pointer;list-style:none}
+.nav-more summary::-webkit-details-marker{display:none}
+.nav-more summary::after{content:"";width:6px;height:6px;border:solid currentColor;border-width:0 1px 1px 0;transform:rotate(45deg);margin-top:-3px}
+.nav-more[open] summary,.nav-more.active summary{background:#25283c;border-color:#474059;color:var(--gold2)}
+.nav-more-items{margin:4px 0 0 10px;padding:4px;border:1px solid var(--border);border-radius:12px;background:#171d2e}
+.nav button:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.director-page{max-width:820px}
+.summary-meta{color:var(--muted);font-size:12px;font-weight:500}
+summary .summary-meta{margin-left:6px}
+.chip{position:relative;display:inline-flex;align-items:center;cursor:pointer;min-height:36px}
+.chip input{display:block;position:absolute;opacity:0;width:1px;height:1px}
+.chip:focus-within{outline:2px solid var(--gold);outline-offset:2px}
+.compact-action{padding:8px 12px;min-height:40px;font-size:13px}
+.director-actions,.production-brief .button-row{margin-top:12px}
+.director-actions #open-video{min-height:44px}
+#save-status:not(:empty){margin-top:8px}
+.video-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr);align-items:start;gap:16px;max-width:1120px}
+.video-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#video-prompt{min-height:110px}
+.video-layout .button,.video-layout .ghost{min-height:44px}
+.reference-preview{display:flex;align-items:center;gap:10px;margin-top:8px;min-width:0}
+.reference-preview img{width:56px;height:44px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
+.reference-preview span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:12px}
+.video-consent{margin:0 0 12px;align-items:center;min-height:36px}
+.video-consent input{flex-shrink:0;width:17px;height:17px}
+.video-status{margin:9px 0 0}
+.video-status:empty,.clip-info:empty{display:none}
+.video-layout button:disabled{opacity:.55;cursor:wait;transform:none}
+.clip-empty{min-height:150px;aspect-ratio:16/9;display:grid;place-content:center;justify-items:center;gap:10px;border:1px solid var(--border);border-radius:12px;background:radial-gradient(ellipse at 50% 20%,#28283f,#0c1220);color:var(--muted)}
+.clip-empty p{margin:0;font-size:13px}
+#video-preview,#render-canvas{display:block;width:100%;height:auto;max-height:62vh;object-fit:contain;background:#080c16;border-radius:12px}
+.clip-info{overflow-wrap:anywhere}
+#render-download{display:inline-flex;align-items:center;text-decoration:none}
+#video-tools{margin-bottom:0}
+#video-tools .field{margin-top:12px}
+#render-canvas:not(.hidden){margin-bottom:12px}
+@media(max-width:990px){.video-layout{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:730px){
+  .sidebar{padding-top:max(8px,env(safe-area-inset-top));border-right:0;border-bottom:1px solid var(--border)}
+  .brand{margin:0;padding:0 4px}
+  .brand-mark{width:27px;height:27px;border-radius:8px}
+  .nav-more summary{justify-content:center;padding:9px 4px;font-size:13px}
+  .nav-more-items{position:absolute;right:0;top:100%;min-width:125px;z-index:1;box-shadow:var(--shadow)}
+  .nav-more-items button{justify-content:flex-start;padding-left:12px}
+  .container{padding-top:16px}
+  .page-head{margin-bottom:15px}
+  .page-head h1{margin-top:2px}
+  .field input:not([type=file]),.field textarea,.field select{font-size:16px}
+}
+@media(max-width:375px){
+  .video-layout .panel-body{padding:13px}
+  .video-layout .button,.video-layout .ghost{padding-left:10px;padding-right:10px}
+}
 </style>
 </head>
 <body>
 <div class="shell">
 <aside class="sidebar">
-  <div class="brand"><div class="brand-mark">S</div><div><div class="brand-name">SEEKER STUDIO</div><div class="brand-sub">PRODUCTION SYSTEM · V3</div></div></div>
-  <div class="side-label">WORKSPACE</div>
+  <div class="brand"><div class="brand-mark" aria-hidden="true">S</div><div class="brand-name">SEEKER STUDIO</div></div>
   <nav class="nav" aria-label="Studio navigation">
-    <button class="active" data-tab="studio"><span class="symbol">◈</span> Direct</button>
-    <button data-tab="brain"><span class="symbol">✦</span> Write</button>
-    <button data-tab="shots"><span class="symbol">▦</span> Shots</button>
-    <button data-tab="canon"><span class="symbol">◉</span> Canon</button>
-    <button data-tab="voice"><span class="symbol">♫</span> Voice</button>
-    <button data-tab="export"><span class="symbol">⇩</span> Backup</button>
+    <button type="button" class="active" data-tab="studio" aria-current="page">Direct</button>
+    <button type="button" data-tab="brain">Write</button>
+    <button type="button" data-tab="shots">Shots</button>
+    <button type="button" data-tab="video">Video</button>
+    <details class="nav-more" id="nav-more">
+      <summary>More</summary>
+      <div class="nav-more-items">
+        <button type="button" data-tab="canon">Canon</button>
+        <button type="button" data-tab="voice">Voice</button>
+        <button type="button" data-tab="export">Backup</button>
+      </div>
+    </details>
   </nav>
-  <div class="side-bottom"><span class="status-indicator"></span> Local-first workspace<br><br>Only selected excerpts leave this browser when you explicitly run an AI request.</div>
 </aside>
 <main>
-<div class="topbar"><div class="breadcrumbs">Seeker's Codex <span style="opacity:.45;margin:0 8px">/</span> <strong id="breadcrumb">Director's Desk</strong></div><div class="topbadge">◈ CANON-LOCKED WORKFLOW</div></div>
 <div class="container">
-<section data-page="studio">
-<div class="page-head"><div><div class="eyebrow">PRODUCTION HEADQUARTERS</div><h1>Director's Desk<span style="color:var(--gold)">.</span></h1><p>Build chapter-accurate scenes, lock character details, and produce structured animation prompts for your episode pipeline.</p></div><button class="button" id="go-shots">View Shot Board →</button></div>
-<div class="metrics"><div class="metric"><div class="metric-label">Saved shots</div><div class="metric-value accent" id="m-scenes">0</div></div><div class="metric"><div class="metric-label">Runtime planned</div><div class="metric-value" id="m-runtime">00:00</div></div><div class="metric"><div class="metric-label">Canon profiles</div><div class="metric-value" id="m-canon">11</div></div><div class="metric"><div class="metric-label">Current chapter</div><div class="metric-value" id="m-chapter">90</div></div></div>
-<div class="workspace">
-<div class="panel"><div class="panel-header"><h2>01 / Scene Composer</h2><small>Anime episode builder</small></div><div class="panel-body">
-<div class="fields-2"><div class="field"><label for="series">Series</label><select id="series"><option value="Beyond the Abyssal Line">Beyond the Abyssal Line</option><option value="Light Born">Light Born</option><option value="The Sagas">The Sagas</option></select></div><div class="field"><label for="chapter">Chapter / sequence</label><input id="chapter" value="90 · Darker Than Black Pt. 7" /></div></div>
-<div class="fields-2"><div class="field"><label for="shot-name">Shot title</label><input id="shot-name" value="Rin above Ring Two" /></div><div class="field"><label for="provider">Output format</label><select id="provider"><option value="Veo Omni 1.1">Veo Omni 1.1</option><option value="Seedance 2.0">Seedance 2.0</option><option value="Universal">Universal</option></select></div></div>
-<div class="fields-2"><div class="field"><label for="duration">Shot duration</label><select id="duration"><option value="5">5 seconds</option><option selected value="10">10 seconds</option><option value="15">15 seconds</option></select></div><div class="field"><label for="shot-number">Shot number</label><input type="number" id="shot-number" min="1" value="1" /></div></div>
-<div class="field"><label>On-screen characters</label><div class="chiprow" id="character-chips"></div><p class="hint">Selected characters automatically bring their established equipment, abilities and continuity restrictions into the production prompt.</p></div>
-<div class="field"><label for="scene-setting">Location and environment</label><textarea id="scene-setting">Magnara, Ring Two. Pink Heart Moon above pale-stone rooftops, illuminated canals and guarded avenues at night.</textarea></div>
-<div class="field"><label for="scene-action">Story beat / action</label><textarea id="scene-action">Rin surveys the lived-in Seeker district from a stone rooftop, studying the roads and defenses before deciding where to search next.</textarea></div>
-<div class="field"><label for="scene-dialogue">Exact dialogue (optional)</label><textarea id="scene-dialogue" placeholder="Paste dialogue from the published chapter. Leave blank rather than inventing dialogue."></textarea></div>
-<details class="studio-options"><summary>Camera, sound, effects and source</summary><div class="fields-2"><div class="field"><label for="scene-camera">Camera direction</label><input id="scene-camera" value="Slow tracking shot, rooftop-height perspective, controlled anime framing" /></div><div class="field"><label for="scene-audio">Music and sound</label><input id="scene-audio" value="Wind on stone, distant canals, muffled nighttime city activity" /></div></div>
-<div class="field"><label for="scene-effects">Muti / VFX</label><input id="scene-effects" value="Subtle active Viatra in Rin's eyes; no unearned power effects" /></div>
-<div class="field"><label for="source-excerpt">Published source passage (optional, local only)</label><textarea id="source-excerpt" placeholder="Paste the exact passage to anchor the adaptation. This is not uploaded anywhere."></textarea><p class="hint">Always compare adaptations against the actual source. The sample scene is a planning outline, not a verbatim chapter adaptation.</p></div></details>
-<div class="button-row"><button class="button" id="save-shot">+ Save shot</button><button class="ghost" id="copy-prompt">Copy production prompt</button><button class="ghost" id="open-video">Make video</button><button class="ghost" id="clear-draft">New blank shot</button></div>
-<div id="save-status" class="hint" role="status" aria-live="polite"></div>
-</div></div>
-<div class="panel"><div class="stage"><div class="stage-copy"><div class="stage-overline">SEEKER'S CODEX · SCENE PREVIEW</div><div class="stage-heading" id="stage-heading">Ring Two, Under the Heart Moon</div></div></div><div class="panel-header"><h2>02 / Director's Output</h2><small>Live generated brief</small></div><div class="panel-body"><div id="canon-result" class="notice"></div><p class="sect-title">Production prompt · <span id="provider-label">Veo Omni 1.1</span></p><div class="preview-text mono" id="prompt-preview"></div><div class="section-split"><p class="sect-title" style="margin-top:0">Pipeline limits</p><p class="note">Director's Desk generates consistent scripts, shot directions and prompts. The V2 Writing Brain can call an AI model only when you supply a key and consent to sending selected evidence. It does <b>not</b> render video or create cloned character voices. Voice Lab can audition your device's built-in voices. Use Make video to open a renderer, then preview your downloaded clip here.</p></div></div></div>
-</div>
+<section data-page="studio" class="director-page">
+  <div class="page-head">
+    <div><h1>Director’s Desk</h1><p>Plan a shot, then turn it into a clip.</p></div>
+    <button type="button" class="ghost compact-action" id="clear-draft">New shot</button>
+  </div>
+  <div class="panel"><div class="panel-body">
+    <div class="field"><label for="shot-name">Shot title</label><input id="shot-name" value="Rin above Ring Two" /></div>
+    <div class="field"><label for="scene-action">Story beat / action</label><textarea id="scene-action">Rin surveys the lived-in Seeker district from a stone rooftop, studying the roads and defenses before deciding where to search next.</textarea></div>
+    <div class="field"><label for="scene-setting">Location and environment</label><textarea id="scene-setting">Magnara, Ring Two. Pink Heart Moon above pale-stone rooftops, illuminated canals and guarded avenues at night.</textarea></div>
+    <details class="studio-options">
+      <summary>Cast <span class="summary-meta" id="cast-selection"></span></summary>
+      <div class="chiprow" id="character-chips"></div>
+    </details>
+    <details class="studio-options">
+      <summary>Shot details</summary>
+      <div class="fields-2"><div class="field"><label for="series">Series</label><select id="series"><option value="Beyond the Abyssal Line">Beyond the Abyssal Line</option><option value="Light Born">Light Born</option><option value="The Sagas">The Sagas</option></select></div><div class="field"><label for="chapter">Chapter / sequence</label><input id="chapter" value="90 · Darker Than Black Pt. 7" /></div></div>
+      <div class="fields-2"><div class="field"><label for="duration">Shot duration</label><select id="duration"><option value="5">5 seconds</option><option selected value="10">10 seconds</option><option value="15">15 seconds</option></select></div><div class="field"><label for="shot-number">Shot number</label><input type="number" id="shot-number" min="1" value="1" /></div></div>
+      <div class="field"><label for="provider">Prompt export format</label><select id="provider"><option value="Veo Omni 1.1">Veo Omni 1.1</option><option value="Seedance 2.0">Seedance 2.0</option><option value="Universal">Universal</option></select></div>
+      <div class="field"><label for="scene-dialogue">Exact dialogue (optional)</label><textarea id="scene-dialogue" placeholder="Paste dialogue from the published chapter. Leave blank rather than inventing dialogue."></textarea></div>
+      <div class="fields-2"><div class="field"><label for="scene-camera">Camera direction</label><input id="scene-camera" value="Slow tracking shot, rooftop-height perspective, controlled anime framing" /></div><div class="field"><label for="scene-audio">Music and sound</label><input id="scene-audio" value="Wind on stone, distant canals, muffled nighttime city activity" /></div></div>
+      <div class="field"><label for="scene-effects">Muti / VFX</label><input id="scene-effects" value="Subtle active Viatra in Rin's eyes; no unearned power effects" /></div>
+      <div class="field"><label for="source-excerpt">Published source passage (optional, local only)</label><textarea id="source-excerpt" placeholder="Paste the exact passage to anchor the adaptation. This is not uploaded anywhere."></textarea><p class="hint">Always compare adaptations against the actual source. The sample scene is a planning outline, not a verbatim chapter adaptation.</p></div>
+    </details>
+    <div id="canon-result" class="notice hidden" role="status"></div>
+    <div class="button-row director-actions">
+      <button type="button" class="button" id="open-video">Make video</button>
+      <button type="button" class="ghost" id="save-shot">Save shot</button>
+    </div>
+    <div id="save-status" class="note" role="status"></div>
+    <details class="studio-options production-brief">
+      <summary>Production brief <span class="summary-meta" id="provider-label"></span></summary>
+      <div class="preview-text mono" id="prompt-preview" tabindex="0" aria-label="Production brief"></div>
+      <div class="button-row"><button type="button" class="ghost" id="copy-prompt">Copy production prompt</button><span class="note" id="brief-status" role="status"></span></div>
+      <p class="note" id="canon-brief"></p>
+    </details>
+  </div></div>
 </section>
 <section data-page="brain" class="hidden">
-<div class="page-head"><div><div class="eyebrow">CHAPTERS • CANON • GROUNDED REASONING</div><h1>Writing Brain<span style="color:var(--gold)">.</span></h1><p>Build your private chapter library, find evidence in the manuscripts, audit known continuity rules, and optionally ask an actual AI model. Author decisions are always final.</p></div></div>
-<div class="brain-hero"><div><div class="eyebrow">SEEKER STUDIO V2</div><div style="font-family:Georgia,serif;font-size:24px;margin:7px 0">Your universe. Your source of truth.</div><div class="note">The source finder and targeted rule checks work offline. AI writing requires connecting your own provider key; no AI connection has been made for you.</div></div><div class="brain-stamp" id="brain-library-count">0 chapters</div></div>
+<div class="page-head"><div><h1>Writing Brain</h1><p>Save chapters, find source passages, and check continuity.</p></div></div>
 <div class="brain-grid">
-<div class="panel"><div class="panel-header"><h2>01 / Manuscript Library</h2><small>Stored in this browser</small></div><div class="panel-body">
+<div class="panel"><div class="panel-header"><h2>Manuscripts</h2><small id="brain-library-count">0 chapters</small></div><div class="panel-body">
 <div class="fields-2"><div class="field"><label for="brain-series">Series</label><select id="brain-series"><option>Beyond the Abyssal Line</option><option>Light Born</option><option>The Sagas</option></select></div><div class="field"><label for="brain-kind">Source status</label><select id="brain-kind"><option value="draft">Unpublished draft</option><option value="published">Published (author-marked)</option><option value="notes">Canon notes / revisions</option></select></div></div>
 <div class="field"><label for="brain-title">Chapter title</label><input id="brain-title" placeholder="e.g., Chapter 90 · Darker Than Black Pt. 7" /></div>
 <div class="field"><label for="brain-text">Chapter / manuscript text</label><textarea id="brain-text" class="brain-editor" placeholder="Paste the original chapter here. The text stays in this browser unless you deliberately send source excerpts to an AI provider."></textarea><div class="hint" id="brain-wordcount">0 words</div></div>
@@ -86,55 +159,85 @@ main{min-width:0}.topbar{height:68px;border-bottom:1px solid var(--border);displ
 <div class="button-row" style="margin-top:13px"><button class="ghost mini" id="brain-backup">Download complete V2 backup</button><label for="brain-restore" class="ghost mini label-button">Restore V2 backup</label><input id="brain-restore" class="hidden" type="file" accept=".json,application/json" /></div><div class="hint" id="brain-backup-status" role="status" aria-live="polite">V2 backups include the manuscript library and your V1 production shots. Your AI key is never included.</div></details>
 <div class="field"><label for="brain-filter">Find saved chapters</label><input id="brain-filter" placeholder="Search titles..." /></div><div class="brain-list" id="brain-doc-list"></div>
 </div></div>
-<div class="panel"><div class="panel-header"><h2>02 / AI Research & Writing</h2><small>Source-grounded workflow</small></div><div class="panel-body">
-<div class="brain-cap"><span class="dot"></span><strong>Offline source finder ready</strong><div class="hint">The chapter library is searchable without a key. Generated answers and creative writing require an AI connection.</div></div>
+<div class="panel"><div class="panel-header"><h2>Research &amp; writing</h2></div><div class="panel-body">
 <div class="fields-2"><div class="field"><label for="brain-mode">Task</label><select id="brain-mode"><option value="lookup">Find source evidence (offline)</option><option value="qa">Answer using sources (AI)</option><option value="audit">Continuity review (AI)</option><option value="adapt">Adapt into anime screenplay (AI)</option><option value="rewrite">Polish passage (AI)</option></select></div><div class="field"><label for="brain-scope">Search scope</label><select id="brain-scope"><option value="all">All saved chapters + character cards</option><option value="current">Current chapter + character cards</option><option value="published">Published chapters + character cards</option></select></div></div>
 <div class="field"><label for="brain-question">Your question or instruction</label><textarea id="brain-question" placeholder="What does Chapter 90 establish about Rin's equipment and environment?" class="brain-question"></textarea></div>
 <div class="button-row"><button class="button" id="brain-run">Find source evidence</button><button class="ghost" id="brain-check">Run offline canon check</button></div>
-<div class="hint" id="brain-task-status" role="status" aria-live="polite">Results identify source titles and excerpts; they are not automatic approval of changes.</div>
+<div class="hint" id="brain-task-status" role="status" aria-live="polite"></div>
 <details class="studio-options" id="brain-connection"><summary>Connect Gemini (optional)</summary>
 <div class="field"><label for="brain-key">Optional Google Gemini API key</label><input type="password" id="brain-key" autocomplete="off" spellcheck="false" placeholder="Paste only when you choose to connect" /><div class="hint">Used in memory for this open page only. Never stored in your project or uploaded to GitHub. When you run an AI task, relevant chapter excerpts and your question go to Google. Free-tier access and quotas depend on the provider. Avoid sensitive drafts if you do not wish to share them.</div></div>
 <div class="fields-2"><div class="field"><label for="brain-model">Model ID</label><input id="brain-model" value="gemini-2.5-flash" spellcheck="false" /><div class="hint">Change if this model is unavailable to your account.</div></div><div class="field"><label for="brain-ai-approval">Before sending</label><div class="brain-consent"><label><input type="checkbox" id="brain-ai-approval" /> I approve sending my question and selected source excerpts to Google.</label></div></div></div>
 <div class="button-row"><button class="ghost mini" id="brain-clear-key">Clear key</button><a class="resource-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer noopener">Create API key ↗</a></div></details>
-<div class="panel" id="brain-result" tabindex="-1" style="margin-top:16px"><div class="panel-header"><h2>03 / Evidence & Output</h2><small id="brain-result-label">Awaiting first task</small></div><div class="panel-body"><div id="brain-sources" class="brain-sources"></div><div id="brain-answer" class="brain-answer" aria-live="polite" tabindex="0">Select a task, enter a question, then tap Find Source Evidence. For full AI reasoning, connect a provider key above.</div><div class="button-row" style="margin-top:14px"><button class="ghost mini" id="brain-copy">Copy result</button><button class="ghost mini" id="brain-download">Download result TXT</button></div><div class="hint" id="brain-result-status" role="status"></div></div></div>
+<div class="panel" id="brain-result" tabindex="-1" style="margin-top:16px"><div class="panel-header"><h2>Results</h2><small id="brain-result-label">Awaiting first task</small></div><div class="panel-body"><div id="brain-sources" class="brain-sources"></div><div id="brain-answer" class="brain-answer" aria-live="polite" tabindex="0">Select a task, enter a question, then tap Find Source Evidence. For full AI reasoning, connect a provider key above.</div><div class="button-row" style="margin-top:14px"><button class="ghost mini" id="brain-copy">Copy result</button><button class="ghost mini" id="brain-download">Download result TXT</button></div><div class="hint" id="brain-result-status" role="status"></div></div></div>
 </div></div>
 </div>
 
 </section>
 
 <section data-page="video" class="hidden">
-<div class="page-head"><div><div class="eyebrow">ANIME VIDEO</div><h1>Make video<span style="color:var(--gold)">.</span></h1><p id="video-shot-name"></p></div><button class="ghost" id="video-back">Back to shot</button></div>
-<div class="workspace">
-<div class="panel"><div class="panel-header"><h2>1. Prepare the video prompt</h2></div><div class="panel-body">
-<div class="field"><label for="video-prompt">Video prompt</label><textarea id="video-prompt" class="brain-editor" spellcheck="false"></textarea></div>
-<button class="button" id="video-copy">Copy video prompt</button>
-<p class="hint" id="video-status" role="status"></p>
-<p class="hint">The draft prompt includes your shot directions and dialogue. The manuscript passage stays in the Director. Review the prompt before pasting it into a renderer.</p>
-</div></div>
-<div class="panel"><div class="panel-header"><h2>2. Render in Studio</h2></div><div class="panel-body">
-<p class="note">Make a silent animatic using your own art or the built-in backdrop. Studio adds camera motion and shot captions. Keep this tab open while it renders.</p>
-<div class="field"><label for="render-art">Reference art (optional)</label><input id="render-art" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" /></div>
-<div class="field"><label for="render-motion">Camera motion</label><select id="render-motion"><option value="push">Slow push in</option><option value="pan">Pan across</option><option value="hold">Hold</option></select></div>
-<canvas id="render-canvas" class="hidden" width="960" height="540" style="width:100%;height:auto" aria-label="Animatic render preview"></canvas>
-<div class="button-row"><button class="button" id="render-start">Render in Studio</button><button class="ghost hidden" id="render-cancel">Cancel render</button><a class="ghost label-button hidden" id="render-download">Download clip</a></div>
-<p class="hint" id="render-status" role="status">Free local rendering. No uploads or credits.</p>
-<div class="small-divider"></div>
-<h3>Generate with AI · Free GPU queue</h3>
-<p class="note">LTX Video creates new frames from the prompt above. Add reference art above to guide character design. A shared GPU runs the model and free capacity can run out.</p>
-<div class="field"><label for="ai-video-length">AI clip length</label><select id="ai-video-length"><option value="3">3 seconds</option><option value="5">5 seconds</option></select></div>
-<label class="check"><input type="checkbox" id="ai-video-consent" /> Send this prompt and any selected reference art to the public Lightricks GPU service. Use material you’re comfortable sharing there.</label>
-<button class="button" id="ai-video-start">Generate AI clip</button>
-<p class="hint" id="ai-video-status" role="status">No API key or paid account required by Studio.</p>
-<div class="small-divider"></div>
-<div class="field"><label for="video-file">Preview your downloaded clip</label><input type="file" id="video-file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" /></div>
-<p class="hint" id="video-preview-status" role="status">Playback uses the file on your device.</p>
-<video id="video-preview" class="hidden" style="width:100%" controls playsinline preload="metadata"></video>
-</div></div></div>
+  <div class="page-head">
+    <div><h1>Video Studio</h1><p id="video-shot-name">Start with a prompt or open a shot from the Director.</p></div>
+    <button type="button" class="ghost compact-action" id="video-back">Back to shot</button>
+  </div>
+  <div class="video-layout">
+    <div class="panel">
+      <div class="panel-header"><h2>Create a clip</h2><small>Free shared GPU</small></div>
+      <div class="panel-body">
+        <div class="field">
+          <label for="video-prompt">Video prompt</label>
+          <textarea id="video-prompt" rows="4" maxlength="5000" placeholder="Describe the action, setting, and camera." spellcheck="false"></textarea>
+        </div>
+        <div class="video-settings">
+          <div class="field"><label for="ai-video-length">Length</label><select id="ai-video-length"><option value="3">3 seconds</option><option value="5">5 seconds</option></select></div>
+          <div class="field"><label for="ai-video-frame">Frame</label><select id="ai-video-frame"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
+        </div>
+        <div class="field reference-field">
+          <label for="render-art">Reference art <span class="summary-meta">Optional</span></label>
+          <input type="file" id="render-art" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" />
+          <div class="reference-preview hidden" id="reference-preview">
+            <img id="reference-image" alt="Selected reference art" />
+            <span id="reference-name"></span>
+            <button type="button" class="ghost compact-action" id="reference-remove">Remove</button>
+          </div>
+        </div>
+        <label class="check video-consent"><input type="checkbox" id="ai-video-consent" /> <span>Send this prompt and any selected art to Lightricks’ public GPU.</span></label>
+        <div class="button-row">
+          <button type="button" class="button" id="ai-video-start">Generate AI clip</button>
+          <button type="button" class="ghost hidden" id="ai-video-stop">Stop waiting</button>
+        </div>
+        <p class="note video-status" id="ai-video-status" role="status"></p>
+      </div>
+    </div>
+    <div class="panel" id="video-result">
+      <div class="panel-header"><h2>Clip preview</h2><small id="video-clip-kind"></small></div>
+      <div class="panel-body">
+        <div class="clip-empty" id="video-empty">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="3"/><path d="M10 8.8v6.4l5-3.2z"/></svg>
+          <p>Your clip will appear here.</p>
+        </div>
+        <video id="video-preview" class="hidden" controls playsinline preload="metadata" aria-label="Clip preview"></video>
+        <p class="note clip-info" id="video-preview-status" role="status"></p>
+        <a class="ghost label-button hidden" id="render-download">Download clip</a>
+        <details class="studio-options" id="video-tools">
+          <summary>More video tools</summary>
+          <div class="button-row"><button type="button" class="ghost" id="video-copy">Copy video prompt</button></div>
+          <p class="note video-status" id="video-status" role="status"></p>
+          <div class="field"><label for="video-file">Open a clip from this device</label><input type="file" id="video-file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" /></div>
+          <div class="field">
+            <label for="render-motion">Animatic camera</label><select id="render-motion"><option value="push">Slow push in</option><option value="pan">Pan across</option><option value="hold">Hold</option></select>
+          </div>
+          <p class="note">Render a silent storyboard clip on this device with the selected art or a built-in backdrop.</p>
+          <canvas id="render-canvas" class="hidden" width="960" height="540" aria-label="Animatic render preview"></canvas>
+          <div class="button-row"><button type="button" class="ghost" id="render-start">Render animatic</button><button type="button" class="ghost hidden" id="render-cancel">Cancel render</button></div>
+          <p class="note video-status" id="render-status" role="status"></p>
+        </details>
+      </div>
+    </div>
+  </div>
 </section>
 <section data-page="shots" class="hidden">
-<div class="page-head"><div><div class="eyebrow">EPISODE PIPELINE</div><h1>Shot Board<span style="color:var(--gold)">.</span></h1><p>Saved scenes stay ordered by shot number. Select any shot to revise its plan and copy its prompt.</p></div><button id="new-shot-shortcut" class="button">+ Compose shot</button></div>
-<div class="metrics"><div class="metric"><div class="metric-label">Shot count</div><div class="metric-value" id="shots-count">0</div></div><div class="metric"><div class="metric-label">Planned runtime</div><div class="metric-value" id="shots-runtime">00:00</div></div><div class="metric"><div class="metric-label">Output template</div><div class="metric-value" style="font-size:18px;margin-top:11px">10-sec ready</div></div><div class="metric"><div class="metric-label">Store</div><div class="metric-value" style="font-size:18px;margin-top:11px">On device</div></div></div>
-<div class="panel"><div class="panel-header"><h2>Episode shot sequence</h2><small id="shot-board-hint" aria-live="polite">No shots saved</small></div><div class="panel-body"><div class="shot-list" id="shot-list"></div></div></div>
+<div class="page-head"><div><h1>Shot Board</h1><p id="shots-summary"></p></div><button type="button" class="ghost compact-action" id="new-shot-shortcut">New shot</button></div>
+<div class="panel"><div class="panel-header"><h2>Saved shots</h2><small id="shot-board-hint" aria-live="polite"></small></div><div class="panel-body"><div class="shot-list" id="shot-list"></div></div></div>
 </section>
 <section data-page="canon" class="hidden">
 <div class="page-head"><div><div class="eyebrow">WORLD & CHARACTER CONSISTENCY</div><h1>Canon Vault<span style="color:var(--gold)">.</span></h1><p>Production anchors from your established worldbuilding. These are brief reference cards, not replacements for the complete chapter manuscripts.</p></div></div>
@@ -153,10 +256,9 @@ main{min-width:0}.topbar{height:68px;border-bottom:1px solid var(--border);displ
 </div></div><div class="panel"><div class="panel-header"><h2>Performance direction</h2></div><div class="panel-body"><div class="stage" style="height:130px"><div class="stage-copy"><div class="stage-overline">VOICE REFERENCE</div><div class="stage-heading" id="voice-hero">Rin Kairo</div></div></div><p class="sect-title">Actor briefing</p><div class="transcript" id="voice-directive"></div><p class="sect-title">Production continuity</p><div class="note">Keep voice casting stable across shots and episodes. Mark fear, injury, exhaustion, anger, and emotional shifts as performance changes rather than randomly switching vocal identities. Final casting and audio mastering remain separate steps.</div></div></div></div>
 </section>
 <section data-page="export" class="hidden">
-<div class="page-head"><div><div class="eyebrow">HANDOFF & BACKUPS</div><h1>Production Exports<span style="color:var(--gold)">.</span></h1><p>Save shot lists and prompts for your animation pipeline or back up the project before changing browsers.</p></div></div>
-<div class="workspace"><div class="panel"><div class="panel-header"><h2>Download deliverables</h2></div><div class="panel-body"><p class="sect-title">Editable project data</p><p class="note">JSON stores your shots and draft, suitable for re-importing into this app. Keep private chapter text secure.</p><div class="button-row"><button class="button" id="export-json">Download project JSON</button><button class="ghost" id="export-txt">Download prompt pack TXT</button></div><div class="small-divider"></div><p class="sect-title">Restore a project</p><div class="field"><label for="import-json">Select your saved JSON backup</label><input type="file" id="import-json" accept=".json,application/json" /></div><div id="import-status" class="hint" role="status" aria-live="polite">Import replaces the current workspace. Export a backup first.</div></div></div><div class="panel"><div class="panel-header"><h2>Future integrations</h2></div><div class="panel-body"><div class="check"><span style="color:var(--gold)">01</span><span>Source-aware LLM writing assistant (available under Writing Brain with author-supplied key)</span></div><div class="check"><span style="color:var(--gold)">02</span><span>Image references, character model sheets and wardrobe locks</span></div><div class="check"><span style="color:var(--gold)">03</span><span>Free AI video generation via the shared GPU queue</span></div><div class="check"><span style="color:var(--gold)">04</span><span>Recorded or licensed voices with stable character casting</span></div><div class="check"><span style="color:var(--gold)">05</span><span>Automated visual/audio QC and assembly into episodes</span></div><div class="notice" style="margin-top:13px">Never hard-code provider keys into public HTML or JavaScript. V2 accepts a temporary key in the open browser session; for production or team access, use a secured server-side proxy.</div></div></div></div>
+<div class="page-head"><div><h1>Backup</h1><p>Download or restore your shots and draft.</p></div></div>
+<div class="workspace"><div class="panel"><div class="panel-header"><h2>Download deliverables</h2></div><div class="panel-body"><p class="sect-title">Editable project data</p><p class="note">JSON stores your shots and draft, suitable for re-importing into this app. Keep private chapter text secure.</p><div class="button-row"><button class="button" id="export-json">Download project JSON</button><button class="ghost" id="export-txt">Download prompt pack TXT</button></div><div class="small-divider"></div><p class="sect-title">Restore a project</p><div class="field"><label for="import-json">Select your saved JSON backup</label><input type="file" id="import-json" accept=".json,application/json" /></div><div id="import-status" class="hint" role="status" aria-live="polite">Import replaces the current workspace. Export a backup first.</div></div></div></div>
 </section>
-<footer>Seeker Studio AI V3 · Author-controlled production planner · Local manuscript library · Optional AI provider connection</footer>
 </div></main></div>
 <script>
 'use strict';
@@ -200,71 +302,124 @@ function canonReport(d){const full=[d.setting,d.action,d.dialogue,d.camera,d.eff
  if(!d.characters.length)flags.push('No on-screen cast selected; add any visible characters for automatic locks.');
  return {problems,flags};}
 function prompt(d){let chars=d.characters.map(id=>cast.find(c=>c.id===id)).filter(Boolean);let report=canonReport(d);return `SEEKER STUDIO AI · ANIMATION PRODUCTION BRIEF\nSeries: Seeker's Codex: ${d.series}\nChapter/sequence: ${d.chapter||'Unspecified'}\nShot: ${String(d.number).padStart(3,'0')} — ${d.name||'Untitled'}\nFormat: ${d.provider} | Duration: ${d.duration} seconds\n\nCANON AUTHORITY\nPublished chapters are the default authority. Explicit newer author corrections supersede the specific affected detail. Preserve identity, age, power limits, injuries, and timeline. Treat missing specifications as unknown, not creative permission.\n\nCAST & HARD CONTINUITY LOCKS\n${chars.length?chars.map(c=>'• '+characterPrompt(c,d)).join('\n'):'• No identified on-screen characters.'}\n\nSCENE SETTING\n${d.setting||'(not supplied)'}\n\nON-SCREEN ACTION\n${d.action||'(must be defined from source)'}\n\nEXACT DIALOGUE / LIP SYNC\n${d.dialogue||'[No spoken line supplied. Do not invent dialogue.]'}\n\nCAMERA / ANIME COMPOSITION\n${d.camera||'Maintain legible blocking and established composition.'}\n\nAUDIO / MUSIC / ATMOSPHERE\n${d.audio||'Maintain environmental sound continuity.'}\n\nMUTI / VFX / AURA\n${d.effects||'No new techniques or unexplained energy effects.'}\n\nSECOND-BY-SECOND DIRECTOR TIMELINE\n${secsPrompt(d)}\n\nSOURCE PASSAGE\n${d.excerpt||'[Not provided. This remains a production outline, not an exact transcript.]'}\n\nNEGATIVE / QUALITY CONSTRAINTS\nNo costume drift. No gear swapping. No face drift. No unearned power escalation. No invented dialogue. No geography contradiction. No voice-identity changes. No unexplained lighting changes. No continuity jump between adjacent shots. Story timing and dramatic pauses must serve the source.\n\nCANON CHECK\n${report.problems.length?report.problems.map(x=>'⚠ '+x).join('\n'):'No contradictions detected by the limited V1 checks.'}\n${report.flags.join('\n')}`;}
-function refreshDraft(save=true){let d=readForm();state.draft=d;$('m-chapter').textContent=(d.chapter.match(/\d+/)||['—'])[0];$('provider-label').textContent=d.provider;$('stage-heading').textContent=d.name||'Untitled Production Shot';$('prompt-preview').textContent=prompt(d);let r=canonReport(d);$('canon-result').classList.toggle('warning',r.problems.length>0);$('canon-result').innerHTML=r.problems.length?'<strong>⚠ Continuity review needed</strong><div style="margin-top:6px">'+r.problems.map(safe).join('<br>')+'</div>':'<strong><span class="dot"></span> V1 targeted checks clear</strong><div style="margin-top:6px">'+safe(r.flags.join(' '))+'</div>';if(save)persist()}
-function updateMetrics(){$('m-canon').textContent=cast.length;let t=state.shots.reduce((sum,s)=>sum+Number(s.duration||0),0);$('m-scenes').textContent=state.shots.length;$('m-runtime').textContent=clock(t);$('shots-count').textContent=state.shots.length;$('shots-runtime').textContent=clock(t);$('shot-board-hint').textContent=`${state.shots.length} saved production shots`;}
-function tab(name){if(name!=='video'){cancelRender();aiVideoRequest?.abort();}document.querySelectorAll('[data-page]').forEach(p=>p.classList.toggle('hidden',p.dataset.page!==name));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));$('breadcrumb').textContent=({studio:"Director's Desk",shots:'Shot Board',canon:'Canon Vault',voice:'Voice Lab',export:'Exports',brain:'Writing Brain',video:'Make video'})[name];if(name==='shots')renderShots();if(name==='voice')renderVoiceDirection();window.scrollTo(0,0)}
-function renderShots(){updateMetrics();let sort=state.shots.slice().sort((a,b)=>a.number-b.number||a.created-b.created);$('shot-list').innerHTML=sort.length?sort.map(s=>`<div class="shot"><div class="shot-n">${String(s.number).padStart(2,'0')}</div><div><div class="shot-title">${safe(s.name||'Untitled')} <span style="color:var(--dim);font-size:10px;font-weight:500">· ${Number(s.duration)}s</span></div><div class="shot-desc">${safe(s.chapter)} · ${safe(s.characters.map(x=>(cast.find(c=>c.id===x)||{}).name||x).join(', ')||'Atmosphere shot')}<br>${safe((s.action||'').slice(0,170))}</div></div><div class="shot-tools"><button data-edit="${safe(s.id)}" title="Edit">Edit</button><button data-copy="${safe(s.id)}" title="Copy">Copy</button><button data-video="${safe(s.id)}">Video</button><button data-delete="${safe(s.id)}" title="Delete">×</button></div></div>`).join(''):'<div class="library-hint">No shots saved yet. Open Director’s Desk and save the first shot to begin the episode.</div>';document.querySelectorAll('[data-edit]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.edit);if(!s)return;editingId=s.id;setForm(s);$('save-shot').textContent='✓ Update shot';$('save-status').textContent='Editing saved shot '+s.number;tab('studio')});document.querySelectorAll('[data-copy]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.copy);if(s)copyText(prompt(s),'Shot prompt copied','shot-board-hint')});document.querySelectorAll('[data-video]').forEach(button=>button.onclick=()=>{
+function refreshDraft(save=true){
+ const draft=readForm();
+ state.draft=draft;
+ const names=cast.filter(character=>draft.characters.includes(character.id)).map(character=>character.name);
+ $('cast-selection').textContent=names.length===1?names[0]:names.length+' selected';
+ $('provider-label').textContent=draft.provider;
+ $('prompt-preview').textContent=prompt(draft);
+ const report=canonReport(draft);
+ const warning=$('canon-result');
+ warning.classList.toggle('hidden',!report.problems.length);
+ warning.classList.toggle('warning',Boolean(report.problems.length));
+ warning.textContent=report.problems.join(' ');
+ $('canon-brief').textContent=report.flags.join(' ');
+ if(save)persist();
+}
+function updateShotsSummary(){
+ const count=state.shots.length;
+ const runtime=state.shots.reduce((sum,shot)=>sum+Number(shot.duration||0),0);
+ $('shots-summary').textContent=count+' saved '+(count===1?'shot':'shots')+' · '+clock(runtime)+' planned';
+}
+function tab(name){
+ if(name!=='video'){
+   cancelRender();
+   $('video-preview').pause();
+ }
+ document.querySelectorAll('[data-page]').forEach(page=>page.classList.toggle('hidden',page.dataset.page!==name));
+ document.querySelectorAll('[data-tab]').forEach(button=>{
+   const selected=button.dataset.tab===name;
+   button.classList.toggle('active',selected);
+   if(selected)button.setAttribute('aria-current','page');
+   else button.removeAttribute('aria-current');
+ });
+ const more=$('nav-more');
+ more.classList.toggle('active',Boolean(more.querySelector('.active')));
+ more.open=false;
+ if(name==='shots')renderShots();
+ if(name==='voice')renderVoiceDirection();
+ window.scrollTo(0,0);
+}
+function renderShots(){updateShotsSummary();$('shot-board-hint').textContent='';let sort=state.shots.slice().sort((a,b)=>a.number-b.number||a.created-b.created);$('shot-list').innerHTML=sort.length?sort.map(s=>`<div class="shot"><div class="shot-n">${String(s.number).padStart(2,'0')}</div><div><div class="shot-title">${safe(s.name||'Untitled')} <span style="color:var(--dim);font-size:10px;font-weight:500">· ${Number(s.duration)}s</span></div><div class="shot-desc">${safe(s.chapter)} · ${safe(s.characters.map(x=>(cast.find(c=>c.id===x)||{}).name||x).join(', ')||'Atmosphere shot')}<br>${safe((s.action||'').slice(0,170))}</div></div><div class="shot-tools"><button data-edit="${safe(s.id)}" title="Edit">Edit</button><button data-copy="${safe(s.id)}" title="Copy">Copy</button><button data-video="${safe(s.id)}">Video</button><button data-delete="${safe(s.id)}" title="Delete">×</button></div></div>`).join(''):'<div class="library-hint">No shots saved yet. Open Director’s Desk and save the first shot to begin the episode.</div>';document.querySelectorAll('[data-edit]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.edit);if(!s)return;editingId=s.id;setForm(s);$('save-shot').textContent='✓ Update shot';$('save-status').textContent='Editing saved shot '+s.number;tab('studio')});document.querySelectorAll('[data-copy]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.copy);if(s)copyText(prompt(s),'Shot prompt copied','shot-board-hint')});document.querySelectorAll('[data-video]').forEach(button=>button.onclick=()=>{
  const shot=state.shots.find(item=>item.id===button.dataset.video);
  if(shot)openVideo(shot,'shots');
 });document.querySelectorAll('[data-delete]').forEach(x=>x.onclick=()=>{if(!confirm('Delete this saved shot?'))return;state.shots=state.shots.filter(a=>a.id!==x.dataset.delete);persist();renderShots()})}
+let renderShot, activeRender, videoClipUrl, referenceArtUrl, clipLabel;
+let videoOrigin='studio';
+function showVideoWorkspace(){
+ if(!renderShot&&!$('video-prompt').value.trim()){
+   const shot=readForm();
+   if(shot.action.trim()&&!canonReport(shot).problems.length)return openVideo(shot,'studio');
+ }
+ tab('video');
+}
 function openVideo(shot, origin){
- const report=canonReport(shot);
- if(report.problems.length||!shot.action.trim()){
-   $(origin==='shots'?'shot-board-hint':'save-status').textContent='Add the shot action and resolve canon warnings before preparing a video.';
+ const status=$(origin==='shots'?'shot-board-hint':'save-status');
+ if(aiVideoRequest||activeRender){
+   status.textContent='A clip is in progress. Open Video to check it before loading another shot.';
    return;
  }
- renderShot=shot;
- $('ai-video-consent').checked=false;
- $('ai-video-status').textContent='No API key or paid account required by Studio.';
- releaseRenderDownload();
- $('render-art').value='';
- $('render-status').textContent='Free local rendering. No uploads or credits.';
- $('video-back').onclick=()=>{clearVideoPreview();tab(origin);};
- $('video-shot-name').textContent=shot.name||'Untitled shot';
+ const report=canonReport(shot);
+ if(report.problems.length||!shot.action.trim()){
+   status.textContent='Add the shot action and resolve canon warnings before preparing a video.';
+   return;
+ }
  const characters=shot.characters.map(id=>cast.find(character=>character.id===id)).filter(Boolean);
  const directions=[
-   'Create one continuous anime shot with expressive 2D cel shading, clean linework and consistent character designs.',
-   'Target duration: '+shot.duration+' seconds. Use the closest duration supported by the selected renderer.',
+   'Single continuous shot in hand-drawn 2D anime with clean ink outlines, deliberate cel shading, and consistent character design.',
    ...characters.map(character=>characterPrompt(character,shot)),
    shot.setting&&'Setting: '+shot.setting,
    'On-screen action: '+shot.action,
-   shot.dialogue?'Speak only this dialogue: '+shot.dialogue:'Use no spoken dialogue.',
    shot.camera&&'Camera: '+shot.camera,
-   shot.audio&&'Sound: '+shot.audio,
-   shot.effects&&'Effects: '+shot.effects
+   shot.effects&&'Effects: '+shot.effects,
+   shot.dialogue&&'Character performance for this line: '+shot.dialogue
  ];
+ renderShot=shot;
+ videoOrigin=origin;
+ $('video-back').textContent=origin==='shots'?'Back to Shots':'Back to Director';
+ $('video-shot-name').textContent=shot.name||'Untitled shot';
  $('video-prompt').value=directions.filter(Boolean).join('\n');
  $('video-status').textContent='';
- clearVideoPreview();
+ $('render-status').textContent='';
+ $('render-art').value='';
+ updateReferencePreview();
  tab('video');
 }
-let videoPreviewUrl;
-function clearVideoPreview(){
- const preview=$('video-preview');
- preview.pause();
- preview.removeAttribute('src');
- preview.load();
- preview.classList.add('hidden');
- if(videoPreviewUrl)URL.revokeObjectURL(videoPreviewUrl);
- videoPreviewUrl=null;
- $('video-file').value='';
- $('video-preview-status').textContent='Playback uses the file on your device.';
+function updateReferencePreview(){
+ if(referenceArtUrl)URL.revokeObjectURL(referenceArtUrl);
+ const file=$('render-art').files[0];
+ const image=$('reference-image');
+ referenceArtUrl=file?URL.createObjectURL(file):null;
+ if(referenceArtUrl)image.src=referenceArtUrl;
+ else image.removeAttribute('src');
+ $('reference-name').textContent=file?.name||'';
+ $('reference-preview').classList.toggle('hidden',!file);
+ $('ai-video-consent').checked=false;
+ if(!aiVideoRequest)$('ai-video-status').textContent='';
 }
-function previewVideo(file){
- clearVideoPreview();
- if(!file)return;
+function clipFilename(shot, suffix, extension){
+ const name=(shot?.name||'seeker').replace(/[^a-z0-9]+/gi,'-').slice(0,80).replace(/^-|-$/g,'')||'seeker';
+ return name+'-'+suffix+'.'+extension;
+}
+function showVideoClip(file, kind){
+ const nextUrl=URL.createObjectURL(file);
+ if(videoClipUrl)URL.revokeObjectURL(videoClipUrl);
+ videoClipUrl=nextUrl;
+ clipLabel=file.name;
  const preview=$('video-preview');
- videoPreviewUrl=URL.createObjectURL(file);
- preview.src=videoPreviewUrl;
+ preview.src=videoClipUrl;
  preview.classList.remove('hidden');
- $('video-preview-status').textContent=file.name;
-}
-let renderShot, activeRender, renderDownloadUrl;
-function releaseRenderDownload(){
- if(renderDownloadUrl)URL.revokeObjectURL(renderDownloadUrl);
- renderDownloadUrl=null;
- $('render-download').removeAttribute('href');
- $('render-download').classList.add('hidden');
+ $('video-empty').classList.add('hidden');
+ $('video-clip-kind').textContent=kind;
+ $('video-preview-status').textContent=clipLabel;
+ const download=$('render-download');
+ download.href=videoClipUrl;
+ download.download=file.name;
+ download.classList.remove('hidden');
+ if(!$('video-result').closest('[data-page]').classList.contains('hidden')){
+   $('video-result').scrollIntoView({block:'nearest'});
+ }
 }
 function cancelRender(){
  if(!activeRender)return;
@@ -346,8 +501,9 @@ function paintAnimatic(ctx, shot, image, motion, elapsed, seconds){
  ctx.fillText(shot.setting||'Scene preview',34,h-27,w-68);
 }
 async function renderAnimatic(){
- if(activeRender||aiVideoRequest||!renderShot)return;
+ if(activeRender||aiVideoRequest)return;
  const canvas=$('render-canvas'), status=$('render-status');
+ if(!renderShot){status.textContent='Open a shot from the Director or Shot Board to make an animatic.';return;}
  if(!canvas.captureStream||typeof MediaRecorder!=='function'){
    status.textContent='This browser cannot record the canvas. Open Studio in a current Safari or Chrome browser.';
    return;
@@ -357,8 +513,8 @@ async function renderAnimatic(){
  const motion=$('render-motion').value;
  activeRender=run;
  $('render-start').disabled=true;
+ $('ai-video-start').disabled=true;
  $('render-cancel').classList.remove('hidden');
- releaseRenderDownload();
  let stream, frame;
  try{
    status.textContent='Preparing render…';
@@ -394,14 +550,8 @@ async function renderAnimatic(){
    if(!parts.length)throw Error('The browser produced an empty recording.');
    const type=recorder.mimeType||parts[0].type;
    const extension=type.includes('mp4')?'mp4':'webm';
-   const filename=(shot.name||'seeker-shot').replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'')||'seeker-shot';
-   const clip=new File(parts,filename+'.'+extension,{type});
-   renderDownloadUrl=URL.createObjectURL(clip);
-   const link=$('render-download');
-   link.href=renderDownloadUrl;
-   link.download=clip.name;
-   link.classList.remove('hidden');
-   previewVideo(clip);
+   const clip=new File(parts,clipFilename(shot,'animatic',extension),{type});
+   showVideoClip(clip,'Local animatic');
    status.textContent='Render complete · '+seconds+' seconds · '+extension.toUpperCase();
  }catch(error){
    status.textContent='Render failed. '+error.message;
@@ -410,6 +560,7 @@ async function renderAnimatic(){
    stream?.getTracks().forEach(track=>track.stop());
    canvas.classList.add('hidden');
    $('render-start').disabled=false;
+   $('ai-video-start').disabled=false;
    $('render-cancel').classList.add('hidden');
    activeRender=null;
    if(run.cancelled)status.textContent='Render canceled. Keep Studio visible while it renders.';
@@ -423,6 +574,9 @@ async function generateAiVideo(){
  const status=$('ai-video-status'), button=$('ai-video-start');
  const prompt=$('video-prompt').value.trim();
  const art=$('render-art').files[0];
+ const shot=renderShot;
+ const portrait=$('ai-video-frame').value==='portrait';
+ const seconds=Number($('ai-video-length').value);
  if(!prompt||prompt.length>5000){status.textContent='Enter a prompt between 1 and 5,000 characters.';return;}
  if(!$('ai-video-consent').checked){status.textContent='Confirm that you want to send the prompt and any selected art to the shared GPU.';return;}
  if(art&&art.size>10*1024*1024){status.textContent='Choose reference art under 10 MB.';return;}
@@ -433,8 +587,8 @@ async function generateAiVideo(){
  button.disabled=true;
  $('render-start').disabled=true;
  $('ai-video-consent').checked=false;
- clearVideoPreview();
- releaseRenderDownload();
+ const stop=$('ai-video-stop');
+ stop.classList.remove('hidden');
  try{
    async function request(path,options={}){
      const response=await fetch(sharedGpu+'/gradio_api/'+path,{...options,signal,credentials:'omit'});
@@ -456,10 +610,12 @@ async function generateAiVideo(){
    status.textContent='Submitting to the free GPU queue…';
    const endpoint=art?'image_to_video':'text_to_video';
    const mode=art?'image-to-video':'text-to-video';
-   const data=[prompt,'blurry, jitter, warped hands, character design drift, unwanted text',reference,null,416,736,mode,Number($('ai-video-length').value),9,42,true,3,true];
+   const height=portrait?736:416, width=portrait?416:736;
+   const direction=art?prompt+'\nKeep the character design and palette established by the first frame.':prompt;
+   const data=[direction,'blurry, flicker, jitter, warped hands, costume changes, unwanted text',reference,null,height,width,mode,seconds,9,42,true,3,true];
    const job=await (await request('call/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})})).json();
    if(typeof job.event_id!=='string'||!job.event_id)throw Error('The shared GPU did not return a job ID.');
-   status.textContent='Waiting for the shared GPU to generate your clip…';
+   status.textContent='Waiting for the shared GPU. You can switch Studio tabs while it runs.';
    const events=await (await request('call/'+endpoint+'/'+encodeURIComponent(job.event_id))).text();
    const completed=events.split(/\r?\n\r?\n/).find(event=>/^event: complete\s*$/m.test(event));
    if(!completed){
@@ -475,28 +631,28 @@ async function generateAiVideo(){
    const response=await fetch(url,{signal,credentials:'omit'});
    if(!response.ok)throw Error('The video file could not be downloaded.');
    const video=await response.blob();
+   signal.throwIfAborted();
    if(!video.size||!video.type.startsWith('video/'))throw Error('The response was not a playable video.');
-   const clip=new File([video],'seeker-ai-clip.mp4',{type:video.type});
-   renderDownloadUrl=URL.createObjectURL(clip);
-   const link=$('render-download');
-   link.href=renderDownloadUrl;
-   link.download=clip.name;
-   link.classList.remove('hidden');
-   previewVideo(clip);
-   status.textContent='AI clip ready. Preview it below or download it.';
+   const extension=video.type.includes('webm')?'webm':'mp4';
+   const clip=new File([video],clipFilename(shot,'ai',extension),{type:video.type});
+   showVideoClip(clip,'AI video');
+   status.textContent='AI clip ready.';
  }catch(error){
    if(signal.aborted){
-     if(signal.reason==='timeout')status.textContent='The free GPU queue timed out. Try again later.';
+     status.textContent=signal.reason==='timeout'
+       ? 'The free GPU queue timed out. Try again later.'
+       : 'Stopped waiting. A submitted GPU job may still finish.';
    }else status.textContent='Generation failed. '+(error instanceof TypeError?'The shared GPU could not be reached from this browser.':error.message);
  }finally{
    clearTimeout(timeout);
    aiVideoRequest=null;
+   stop.classList.add('hidden');
    button.disabled=false;
    $('render-start').disabled=false;
  }
 }
 
-function clearEditing(){editingId=null;$('save-shot').textContent='+ Save shot';$('save-status').textContent=''}
+function clearEditing(){editingId=null;$('save-shot').textContent='Save shot';$('save-status').textContent=''}
 function newShot(overrides={}){
  const {series,chapter,provider,duration}=readForm();
  const number=state.shots.reduce((next,shot)=>Math.max(next,Number(shot.number)+1),1);
@@ -504,7 +660,7 @@ function newShot(overrides={}){
  setForm({series,chapter,provider,duration,number,...overrides});
  persist();
 }
-function saveShot(){let d=readForm();let r=canonReport(d);if(r.problems.length){$('save-status').textContent='Please resolve continuity warnings before saving.';return;}if(!d.action.trim()||!d.name.trim()){$('save-status').textContent='Add a shot title and story action before saving.';return;}if(editingId){let at=state.shots.findIndex(s=>s.id===editingId);if(at>=0)state.shots[at]={...d,id:editingId,created:state.shots[at].created};}else{state.shots.push({...d,id:'shot_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),created:Date.now()});$('shot-number').value=d.number+1;}persist();updateMetrics();clearEditing();$('save-status').textContent='Shot saved. Open Shot Board to review the sequence.';refreshDraft()}
+function saveShot(){let d=readForm();let r=canonReport(d);if(r.problems.length){$('save-status').textContent='Please resolve continuity warnings before saving.';return;}if(!d.action.trim()||!d.name.trim()){$('save-status').textContent='Add a shot title and story action before saving.';return;}if(editingId){let at=state.shots.findIndex(s=>s.id===editingId);if(at>=0)state.shots[at]={...d,id:editingId,created:state.shots[at].created};}else{state.shots.push({...d,id:'shot_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),created:Date.now()});$('shot-number').value=d.number+1;}persist();updateShotsSummary();clearEditing();$('save-status').textContent='Shot saved. Open Shot Board to review the sequence.';refreshDraft()}
 function copyText(s,msg,status='save-status'){if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(s).then(()=>$(status).textContent=msg).catch(()=>fallbackCopy(s,status));else fallbackCopy(s,status)}
 function fallbackCopy(s,status){let a=document.createElement('textarea');a.value=s;a.style.position='fixed';a.style.left='-9999px';document.body.appendChild(a);a.select();let ok=document.execCommand('copy');a.remove();$(status).textContent=ok?'Copied to clipboard':'Clipboard unavailable. Select and copy the visible text.'}
 function renderCanon(){$('character-cards').innerHTML=cast.map(c=>`<div class="character"><div class="char-top"><div class="avatar">${safe(c.glyph)}</div><div><div class="char-name">${safe(c.name)}</div><div class="char-role">${safe(c.role)}</div></div></div><div class="char-notes">${safe(c.canon)}</div><span class="pill">◈ ${safe(c.lock)}</span></div>`).join('')}
@@ -513,22 +669,54 @@ function listSystemVoices(){let sel=$('voice-list');let prev=sel.value;let voice
 function audition(){if(!('speechSynthesis' in window)){$('voice-status').textContent='Built-in voice synthesis is unavailable on this browser.';return}let value=$('voice-text').value.trim();if(!value){$('voice-status').textContent='Add dialogue to audition first.';return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(value);u.rate=Number($('voice-rate').value)||1;u.pitch=Number($('voice-pitch').value)||1;let voices=speechSynthesis.getVoices();if($('voice-list').value!==''&&voices[Number($('voice-list').value)])u.voice=voices[Number($('voice-list').value)];u.onend=()=>{$('voice-status').textContent='Audition finished. Playback is not an exportable audio file.'};u.onerror=()=>{$('voice-status').textContent='Speech playback could not start on this device.'};speechSynthesis.speak(u);$('voice-status').textContent='Playing line through your device voice engine.'}
 function exportDownload(name,content,mime){let blob=new Blob([content],{type:mime});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function packed(){return JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)}
-function importData(file){if(!file)return;file.text().then(s=>{let d=JSON.parse(s);if(d.version!==1||!Array.isArray(d.shots)||!d.draft||typeof d.draft!=='object'||d.shots.some(x=>!Array.isArray(x.characters)))throw Error('Unsupported project file');if(!confirm('Replace your current shots and draft with this imported project?'))return;state={version:1,shots:d.shots,draft:{...defaults.draft,...d.draft}};clearEditing();setForm(state.draft);persist();renderShots();updateMetrics();$('import-status').textContent='Project restored successfully.'}).catch(err=>{$('import-status').textContent='Unable to import: '+err.message})}
-function init(){renderCanon();makeChips(state.draft.characters||[]);setForm(state.draft);for(let id of Object.values(fields))$(id).addEventListener('input',()=>refreshDraft());for(let id of Object.values(fields))$(id).addEventListener('change',()=>refreshDraft());document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));$('go-shots').onclick=()=>tab('shots');$('new-shot-shortcut').onclick=()=>{newShot();tab('studio')};$('save-shot').onclick=saveShot;$('copy-prompt').onclick=()=>copyText(prompt(readForm()),'Production prompt copied');$('clear-draft').onclick=()=>newShot();
+function importData(file){if(!file)return;file.text().then(s=>{let d=JSON.parse(s);if(d.version!==1||!Array.isArray(d.shots)||!d.draft||typeof d.draft!=='object'||d.shots.some(x=>!Array.isArray(x.characters)))throw Error('Unsupported project file');if(!confirm('Replace your current shots and draft with this imported project?'))return;state={version:1,shots:d.shots,draft:{...defaults.draft,...d.draft}};clearEditing();setForm(state.draft);persist();renderShots();updateShotsSummary();$('import-status').textContent='Project restored successfully.'}).catch(err=>{$('import-status').textContent='Unable to import: '+err.message})}
+function init(){renderCanon();setForm(state.draft);for(let id of Object.values(fields))$(id).addEventListener('input',()=>refreshDraft());for(let id of Object.values(fields))$(id).addEventListener('change',()=>refreshDraft());document.querySelectorAll('[data-tab]').forEach(button=>{
+   button.onclick=button.dataset.tab==='video'?showVideoWorkspace:()=>tab(button.dataset.tab);
+ });$('new-shot-shortcut').onclick=()=>{newShot();tab('studio')};$('save-shot').onclick=saveShot;$('copy-prompt').onclick=()=>copyText(prompt(readForm()),'Production prompt copied','brief-status');$('clear-draft').onclick=()=>newShot();
  $('open-video').onclick=()=>openVideo(readForm(),'studio');
  $('video-copy').onclick=()=>{
    const prompt=$('video-prompt').value.trim();
    if(prompt)copyText(prompt,'Video prompt copied','video-status');
  };
- $('video-file').onchange=event=>previewVideo(event.target.files[0]);
+ $('video-back').onclick=()=>tab(videoOrigin);
+ $('video-file').onchange=event=>{
+   const file=event.target.files[0];
+   if(file)showVideoClip(file,'Imported clip');
+   event.target.value='';
+ };
+ $('render-art').onchange=updateReferencePreview;
+ $('reference-remove').onclick=()=>{
+   $('render-art').value='';
+   updateReferencePreview();
+ };
+ $('video-prompt').oninput=()=>{
+   $('ai-video-consent').checked=false;
+   if(!aiVideoRequest)$('ai-video-status').textContent='';
+ };
  $('render-start').onclick=renderAnimatic;
  $('ai-video-start').onclick=generateAiVideo;
+ $('ai-video-stop').onclick=()=>aiVideoRequest?.abort();
  $('render-cancel').onclick=cancelRender;
  document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelRender();});
- $('video-preview').onerror=()=>{
-   if(videoPreviewUrl)$('video-preview-status').textContent='This browser could not play that file. Try an MP4 export.';
+ const more=$('nav-more');
+ document.addEventListener('click',event=>{
+   if(more.open&&!more.contains(event.target))more.open=false;
+ });
+ more.addEventListener('keydown',event=>{
+   if(event.key==='Escape'&&more.open){
+     more.open=false;
+     more.querySelector('summary').focus();
+   }
+ });
+ const preview=$('video-preview');
+ preview.onloadedmetadata=()=>{
+   const duration=Number.isFinite(preview.duration)?' · '+preview.duration.toFixed(1)+' s':'';
+   $('video-preview-status').textContent=clipLabel+duration+' · '+preview.videoWidth+' × '+preview.videoHeight;
  };
- $('voice-character').innerHTML=cast.map(c=>`<option value="${safe(c.id)}">${safe(c.name)}</option>`).join('');$('voice-character').value='rin';$('voice-character').onchange=renderVoiceDirection;$('voice-play').onclick=audition;$('voice-stop').onclick=()=>{if(window.speechSynthesis)speechSynthesis.cancel();$('voice-status').textContent='Playback stopped.'};if('speechSynthesis' in window){listSystemVoices();speechSynthesis.onvoiceschanged=listSystemVoices}else $('voice-status').textContent='No built-in speech synthesis found.';$('export-json').onclick=()=>exportDownload('seeker-studio-project.json',packed(),'application/json');$('export-txt').onclick=()=>{let shots=state.shots.slice().sort((a,b)=>a.number-b.number).map(prompt);exportDownload('seeker-studio-prompts.txt',shots.join('\n\n'+('=').repeat(78)+'\n\n')||'No shots saved.','text/plain')};$('import-json').onchange=x=>importData(x.target.files[0]);updateMetrics();refreshDraft(false)}
+ preview.onerror=()=>{
+   if(videoClipUrl)$('video-preview-status').textContent='This browser could not play '+clipLabel+'.';
+ };
+ $('voice-character').innerHTML=cast.map(c=>`<option value="${safe(c.id)}">${safe(c.name)}</option>`).join('');$('voice-character').value='rin';$('voice-character').onchange=renderVoiceDirection;$('voice-play').onclick=audition;$('voice-stop').onclick=()=>{if(window.speechSynthesis)speechSynthesis.cancel();$('voice-status').textContent='Playback stopped.'};if('speechSynthesis' in window){listSystemVoices();speechSynthesis.onvoiceschanged=listSystemVoices}else $('voice-status').textContent='No built-in speech synthesis found.';$('export-json').onclick=()=>exportDownload('seeker-studio-project.json',packed(),'application/json');$('export-txt').onclick=()=>{let shots=state.shots.slice().sort((a,b)=>a.number-b.number).map(prompt);exportDownload('seeker-studio-prompts.txt',shots.join('\n\n'+('=').repeat(78)+'\n\n')||'No shots saved.','text/plain')};$('import-json').onchange=x=>importData(x.target.files[0]);updateShotsSummary();refreshDraft(false)}
 init();
 </script>
 <script>
@@ -642,7 +830,7 @@ async function backup(){let docs=documents.slice();let edited=draft();if(edited.
 async function restore(file){if(!file)return;try{if(file.size>30*1024*1024)throw Error('Backup too large for in-browser import.');const b=JSON.parse(await file.text());if(b.format!=='seeker-studio-v2'||b.version!==2||!Array.isArray(b.documents)||!b.v1||!Array.isArray(b.v1.shots))throw Error('Not a Seeker Studio V2 backup.');if(b.documents.length>500||b.documents.some(x=>!x.id||!x.title||!['draft','published','notes'].includes(x.kind)||typeof x.content!=='string'||x.content.length>MAX_CHARS))throw Error('Invalid or oversized documents.');if(!confirm('Restore this V2 backup? It replaces your current V1 shots and V2 manuscripts in this browser. Export a backup first.'))return;
  // Restore current V2 docs; recover partially if storage unavailable.
  for(let d of documents)await removeDoc(d.id);for(let d of b.documents)await putDoc(d);
- documents=await getAll();state={...defaults,...b.v1,version:1};persist();clearEditing();setForm(state.draft);updateMetrics();renderShots();activeId=null;by('brain-title').value='';by('brain-text').value='';countWords();renderList();message(`Restored ${documents.length} manuscripts and ${state.shots.length} production shots.`,'brain-backup-status');}
+ documents=await getAll();state={...defaults,...b.v1,version:1};persist();clearEditing();setForm(state.draft);updateShotsSummary();renderShots();activeId=null;by('brain-title').value='';by('brain-text').value='';countWords();renderList();message(`Restored ${documents.length} manuscripts and ${state.shots.length} production shots.`,'brain-backup-status');}
 catch(e){message('Restore failed: '+e.message,'brain-backup-status');}finally{by('brain-restore').value='';}}
 async function importManuscripts(files){if(!files?.length)return;let ok=0,skip=0,kind='draft',series=by('brain-series').value;for(let f of Array.from(files).slice(0,100)){if(!/\.(txt|md)$/i.test(f.name)||f.size>MAX_CHARS*4){skip++;continue;}let content=await f.text();if(!content.trim()||content.length>MAX_CHARS){skip++;continue;}let stamp=new Date().toISOString();let d={id:uuid(),title:f.name.replace(/\.(txt|md)$/i,''),series,kind,content,updated:stamp,created:stamp};try{await putDoc(d);documents.push(d);ok++;}catch(_){skip++;break;}}
  renderList();message(`Imported ${ok} manuscript(s) as unpublished drafts${skip?'; '+skip+' skipped due to size/type/storage':''}.`);by('brain-upload').value='';}
