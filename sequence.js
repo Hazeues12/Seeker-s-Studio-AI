@@ -60,7 +60,7 @@
 
   function mediaJob(message, onProgress) {
     return new Promise((resolve, reject) => {
-      const task = new Worker('sequence-worker.js');
+      const task = new Worker('sequence-worker.js?v=2');
       function finish(callback, value) {
         task.terminate();
         rejectExport = null;
