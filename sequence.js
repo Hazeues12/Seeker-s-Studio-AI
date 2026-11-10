@@ -75,7 +75,7 @@
 
   function mediaJob(message, onProgress) {
     return new Promise((resolve, reject) => {
-      const task = new Worker('sequence-worker.js?v=3');
+      const task = new Worker('sequence-worker.js?v=4');
       function finish(callback, value) {
         task.terminate();
         rejectExport = null;
@@ -120,6 +120,7 @@
     get('sequence-export').disabled = busy || !clips.length;
     get('sequence-files').disabled = busy;
     get('sequence-frame').disabled = busy;
+    get('sequence-resolution').disabled = busy;
     voiceSelect.disabled = busy || !clips.length;
     const clip = selectedClip();
     get('sequence-voice-file').disabled = busy || !clip;
@@ -343,8 +344,9 @@
       if (!clips.length) throw Error('Add a clip to the sequence first.');
       const frame = get('sequence-frame').value;
       const portrait = frame === 'portrait' || (frame === 'auto' && clips[0].height > clips[0].width);
+      const hd = get('sequence-resolution').value === '720';
       cancel.classList.remove('hidden');
-      const buffer = await mediaJob({ action: 'export', clips, portrait, captions: burnCaptions.checked }, data => {
+      const buffer = await mediaJob({ action: 'export', clips, portrait, hd, captions: burnCaptions.checked }, data => {
         progress.value = data.percent;
         const message = 'Exporting clip ' + data.index + ' of ' + data.count + '…';
         if (status.textContent !== message) status.textContent = message;
@@ -354,8 +356,9 @@
       preview.src = outputUrl;
       preview.classList.remove('hidden');
       download.href = outputUrl;
+      download.download = hd ? 'seeker-sequence-720p.mp4' : 'seeker-sequence.mp4';
       download.classList.remove('hidden');
-      status.textContent = 'MP4 ready · ' + time(total(clips));
+      status.textContent = 'MP4 ready · ' + time(total(clips)) + (hd ? ' · 720p' : '');
     } catch (error) {
       status.textContent = error.message;
     } finally {
@@ -371,10 +374,12 @@
     event.target.value = '';
     addFiles(files, status);
   };
-  get('sequence-frame').onchange = () => {
-    clearOutput();
-    status.textContent = '';
-  };
+  for (const id of ['sequence-frame', 'sequence-resolution']) {
+    get(id).onchange = () => {
+      clearOutput();
+      status.textContent = '';
+    };
+  }
   voiceSelect.onchange = () => {
     voiceStatus.textContent = '';
     renderVoice();

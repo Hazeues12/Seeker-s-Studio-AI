@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#0b0e1a" />
 <title>Seeker Studio AI — Production Desk</title>
-<script src="sequence.js?v=4" defer></script>
+<script src="sequence.js?v=5" defer></script>
 <style>
 :root{--bg:#090c16;--panel:#111624;--panel2:#171d2e;--panel3:#20283b;--border:#2c3448;--text:#f3f4fb;--muted:#a1adc5;--dim:#697791;--gold:#e9b868;--gold2:#f6dba1;--aqua:#6de0d3;--red:#ff8797;--blue:#829bff;--radius:17px;--shadow:0 16px 40px #02040d6e;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
 *{box-sizing:border-box}body{background:var(--bg);color:var(--text);margin:0;min-height:100vh;font-size:14px}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:var(--gold)}
@@ -265,7 +265,7 @@ summary .summary-meta{margin-left:6px}
           <p class="note video-status" id="video-keyframe-status" role="status"></p>
         </div>
         <div class="field"><label for="ai-video-model">Generator</label>
-          <select id="ai-video-model" aria-describedby="ai-video-model-note"><option value="fast">Fast · LTX Video</option><option value="detail">Detail + sound · LTX-2.5</option></select>
+          <select id="ai-video-model" aria-describedby="ai-video-model-note"><option value="fast">Fast · LTX Video</option><option value="hd">HD · LTX Video</option><option value="detail">Detail + sound · LTX-2.5</option></select>
           <p class="note video-status" id="ai-video-model-note"></p>
         </div>
         <div class="video-settings">
@@ -348,7 +348,10 @@ summary .summary-meta{margin-left:6px}
     <div class="panel">
       <div class="panel-header"><h2>Export</h2><small>MP4 · on this device</small></div>
       <div class="panel-body">
-        <div class="field"><label for="sequence-frame">Frame</label><select id="sequence-frame"><option value="auto">Match first clip</option><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
+        <div class="fields-2">
+          <div class="field"><label for="sequence-frame">Frame</label><select id="sequence-frame"><option value="auto">Match first clip</option><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
+          <div class="field"><label for="sequence-resolution">Resolution</label><select id="sequence-resolution"><option value="540">540p · standard</option><option value="720">720p · HD</option></select></div>
+        </div>
         <details class="studio-options" id="sequence-sound">
           <summary>Voice and subtitles</summary>
           <div class="field"><label for="sequence-voice-clip">Shot</label><select id="sequence-voice-clip" disabled><option>Add a clip first</option></select></div>
@@ -570,6 +573,7 @@ let renderShot, activeRender, videoClipUrl, referenceArtUrl, frameReference, cli
 let preparedVideoPrompt='',conceptVideoPrompt='';
 let videoOrigin='studio';
 const productionMode=()=>$('video-mode').value==='production';
+const hdModel=()=>$('ai-video-model').value==='hd';
 function motionPlanIssue(shot){
  if(!shot)return 'Open a shot from Director to prepare its motion.';
  const motion=[shot.startPose,shot.action,shot.endPose];
@@ -632,14 +636,12 @@ function updateVideoMode(){
  field.value=production?(issue?'':motionPrompt(renderShot)):conceptVideoPrompt;
  field.placeholder=production?'The motion prompt will appear here.':'Describe the action, setting, and camera.';
  $('video-prompt-label').textContent=production?'Motion prompt':'Video prompt';
- $('reference-label').textContent=production?'Opening keyframe (required)':'Reference art (optional)';
  $('video-motion-tools').classList.toggle('hidden',!production);
  $('video-motion-note').textContent=issue||'Use a matching keyframe for each short segment. When changing the location or lighting, hold the camera steady.';
  $('video-copy-keyframe').disabled=!renderShot;
  $('video-keyframe-status').textContent='';
  $('ai-video-consent').checked=false;
  if(!aiVideoRequest)$('ai-video-status').textContent='';
- alignKeyframe();
  updateVideoHeading();
  updateVideoModel();
 }
@@ -699,7 +701,7 @@ function keyframeOrientation(){
  return image.naturalWidth>image.naturalHeight?'landscape':'portrait';
 }
 function alignKeyframe(){
- const orientation=productionMode()?keyframeOrientation():'';
+ const orientation=(productionMode()||hdModel())?keyframeOrientation():'';
  const frame=$('ai-video-frame');
  if(orientation)frame.value=orientation;
  frame.disabled=Boolean(orientation);
@@ -949,10 +951,15 @@ const videoModels={
 };
 function updateVideoModel(){
  const detail=$('ai-video-model').value==='detail';
+ const hd=hdModel();
  const length=$('ai-video-length');
  length.querySelector('option[value="5"]').disabled=detail;
  if(detail)length.value='3';
- $('ai-video-model-note').textContent=productionMode()
+ $('reference-label').textContent=productionMode()||hd?'Opening keyframe (required)':'Reference art (optional)';
+ alignKeyframe();
+ $('ai-video-model-note').textContent=hd
+   ? '3- or 5-second silent clips from an opening keyframe. Export in 720p to retain HD detail.'
+   : productionMode()
    ? (detail?'Three seconds with generated audio. Add voice takes in Sequence.':'Silent clips, 3 or 5 seconds. Add voice takes in Sequence.')
    : detail
    ? 'Three seconds with generated audio. Check any spoken line and lip sync in the preview.'
@@ -963,19 +970,25 @@ async function generateAiVideo(){
  if(aiVideoRequest||activeRender)return;
  const status=$('ai-video-status'), button=$('ai-video-start');
  const production=productionMode();
+ const hd=hdModel();
  const art=getReferenceArt();
  const shot=currentVideoShot();
+ if((production||hd)&&!art){
+   status.textContent=production?'Choose an opening keyframe before rendering in Production.':'Choose an opening keyframe before rendering in HD.';
+   return;
+ }
  if(production){
-   if(!art){status.textContent='Choose an opening keyframe before rendering in Production.';return;}
    const issue=motionPlanIssue(shot);
    if(issue){status.textContent=issue;return;}
+ }
+ if(production||hd){
    const image=$('reference-image');
    if(!image.complete||!image.naturalWidth){status.textContent='Wait for the keyframe preview to load or choose another image.';return;}
  }
  const prompt=production?motionPrompt(shot):$('video-prompt').value.trim();
  const detail=$('ai-video-model').value==='detail';
  const sharedGpu=videoModels[detail?'detail':'fast'];
- const frame=(production&&keyframeOrientation())||$('ai-video-frame').value;
+ const frame=((production||hd)&&keyframeOrientation())||$('ai-video-frame').value;
  const portrait=frame==='portrait';
  const seconds=Number($('ai-video-length').value);
  if(!prompt||prompt.length>5000){status.textContent='Enter a prompt between 1 and 5,000 characters.';return;}
@@ -1011,7 +1024,8 @@ async function generateAiVideo(){
    status.textContent='Submitting to the free GPU queue…';
    const endpoint=detail?'run':art?'image_to_video':'text_to_video';
    const mode=art?'image-to-video':'text-to-video';
-   const height=portrait?736:416, width=portrait?416:736;
+   const longSide=hd?1280:736, shortSide=hd?704:416;
+   const height=portrait?longSide:shortSide, width=portrait?shortSide:longSide;
    const direction=art&&!production?prompt+'\nKeep the character design and palette established by the first frame.':prompt;
    const negative=production
      ? 'flicker, jitter, extra limbs, extra fingers, warped hands, distorted joints, duplicated subjects, costume changes, lighting shifts, texture crawl, sudden zoom, cuts, unwanted text'
@@ -1040,8 +1054,8 @@ async function generateAiVideo(){
    signal.throwIfAborted();
    if(!video.size||!video.type.startsWith('video/'))throw Error('The response was not a playable video.');
    const extension=video.type.includes('webm')?'webm':'mp4';
-   const clip=new File([video],clipFilename(shot,detail?'ltx25':'ai',extension),{type:video.type});
-   const kind=detail?'LTX-2.5 · with sound':'LTX Video';
+   const clip=new File([video],clipFilename(shot,detail?'ltx25':hd?'hd':'ai',extension),{type:video.type});
+   const kind=detail?'LTX-2.5 · with sound':hd?'HD · LTX Video':'LTX Video';
    showVideoClip(clip,production?'Production · '+kind:kind,shot);
    status.textContent='AI clip ready.';
  }catch(error){
@@ -1186,7 +1200,11 @@ function init(){
  $('video-copy-keyframe').onclick=()=>{
    if(renderShot)copyText(keyframePrompt(renderShot,$('ai-video-frame').value),'Keyframe brief copied.','video-keyframe-status');
  };
- $('ai-video-model').onchange=updateVideoModel;
+ $('ai-video-model').onchange=()=>{
+   updateVideoModel();
+   $('ai-video-consent').checked=false;
+   if(!aiVideoRequest)$('ai-video-status').textContent='';
+ };
  updateVideoModel();
  $('video-use-frame').onclick=useFinalFrame;
  $('reference-remove').onclick=()=>{

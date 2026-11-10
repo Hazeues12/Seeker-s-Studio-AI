@@ -79,7 +79,8 @@ function wrapCaption(context, caption, maxWidth) {
 }
 
 function layoutCaption(context, canvas, caption) {
-  for (let size = 32; size >= 16; size -= 2) {
+  const scale = Math.min(canvas.width, canvas.height) / 540;
+  for (let size = Math.round(32 * scale); size >= Math.round(16 * scale); size -= 2) {
     const font = '600 ' + size + 'px sans-serif';
     context.font = font;
     const padding = Math.ceil(size * .4);
@@ -225,14 +226,17 @@ async function writeAudio(source, { track, start, voice }, frames, offset) {
   }
 }
 
-async function encodeSequence(clips, portrait, captions) {
+async function encodeSequence(clips, portrait, captions, hd) {
   const totalFrames = clips.reduce((sum, clip) => sum + clip.frames, 0);
   if (!totalFrames || totalFrames > maxFrames) throw Error('Sequence length must be 5 minutes or less.');
-  const width = portrait ? 540 : 960;
-  const height = portrait ? 960 : 540;
-  const bitrate = 2_000_000;
+  const shortSide = hd ? 720 : 540;
+  const longSide = hd ? 1280 : 960;
+  const width = portrait ? shortSide : longSide;
+  const height = portrait ? longSide : shortSide;
+  const bitrate = hd ? 3_200_000 : 2_000_000;
   if (!(await canEncodeVideo('avc', { width, height, bitrate }))) {
-    throw Error('This browser cannot encode H.264 MP4. Try opening Studio in Safari or Chrome.');
+    throw Error(hd ? 'This browser could not start the 720p encoder. Choose 540p and try again.'
+      : 'This browser cannot encode H.264 MP4. Try opening Studio in Safari or Chrome.');
   }
   const target = new BufferTarget();
   const output = new Output({ target, format: new Mp4OutputFormat({ fastStart: 'in-memory' }) });
@@ -297,7 +301,7 @@ self.onmessage = async ({ data }) => {
     } else if (data.action === 'inspect-audio') {
       self.postMessage({ type: 'done', result: await getVoiceDuration(data.file) });
     } else if (data.action === 'export') {
-      const result = await encodeSequence(data.clips, data.portrait, data.captions);
+      const result = await encodeSequence(data.clips, data.portrait, data.captions, data.hd === true);
       self.postMessage({ type: 'done', result }, [result]);
     }
   } catch (error) {
