@@ -361,6 +361,13 @@ summary .summary-meta{margin-left:6px}
 </section>
 <section data-page="shots" class="hidden">
 <div class="page-head"><div><h1>Shot Board</h1><p id="shots-summary"></p></div><button type="button" class="ghost compact-action" id="new-shot-shortcut">New shot</button></div>
+<details class="studio-options">
+  <summary>Import an AI shot plan</summary>
+  <p class="note">Copy the planning instructions into your AI chat with your brief. Paste the JSON it returns. Studio checks the plan and adds the shots to this board for review.</p>
+  <div class="field"><label for="shot-plan-json">Shot plan JSON</label><textarea id="shot-plan-json" maxlength="200000" rows="5" spellcheck="false"></textarea></div>
+  <div class="button-row"><button type="button" class="ghost" id="shot-plan-copy">Copy planning instructions</button><button type="button" class="button" id="shot-plan-import">Add planned shots</button></div>
+  <p class="note" id="shot-plan-status" role="status"></p>
+</details>
 <div class="panel"><div class="panel-header"><h2>Saved shots</h2><small id="shot-board-hint" aria-live="polite"></small></div><div class="panel-body"><div class="shot-list" id="shot-list"></div></div></div>
 </section>
 <section data-page="canon" class="hidden">
@@ -944,7 +951,58 @@ function audition(){if(!('speechSynthesis' in window)){$('voice-status').textCon
 function exportDownload(name,content,mime){let blob=new Blob([content],{type:mime});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function packed(){return JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)}
 function importData(file){if(!file)return;file.text().then(s=>{let d=JSON.parse(s);if(d.version!==1||!Array.isArray(d.shots)||!d.draft||typeof d.draft!=='object'||d.shots.some(x=>!Array.isArray(x.characters)))throw Error('Unsupported project file');if(!confirm('Replace your current shots and draft with this imported project?'))return;state={version:1,shots:d.shots,draft:{...defaults.draft,...d.draft}};clearEditing();setForm(state.draft);persist();renderShots();updateShotsSummary();$('import-status').textContent='Project restored successfully.'}).catch(err=>{$('import-status').textContent='Unable to import: '+err.message})}
-function init(){renderCanon();setForm(state.draft);for(let id of Object.values(fields))$(id).addEventListener('input',()=>refreshDraft());for(let id of Object.values(fields))$(id).addEventListener('change',()=>refreshDraft());document.querySelectorAll('[data-tab]').forEach(button=>{
+function planningInstructions(){
+ const example=[{name:'Courtyard arrival',duration:5,setting:'Stone courtyard at dusk, warm lanterns',action:'A courier steps through the gate',camera:'Wide shot, slow push in',dialogue:'',audio:'Footsteps on stone',effects:'',characters:[]}];
+ return 'Act as a cinematographer. Turn my brief into an ordered JSON array using the fields in this example. Return raw JSON only. Plan 1 to 60 shots, each 3 or 5 seconds, with one visible action per shot. Include lighting and visual style in setting. Use supplied dialogue verbatim. Leave dialogue empty when there is no supplied line. Use an empty characters list for unnamed subjects or these IDs for established characters: '+cast.map(character=>character.id).join(', ')+'. Keep clothing, props and positions consistent across shots.\n\n'+JSON.stringify(example,null,2)+'\n\nMy brief:';
+}
+function parseShotPlan(text, series, provider){
+ const raw=text.trim().replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/i,'$1');
+ let plan;
+ try{plan=JSON.parse(raw);}catch(_){throw Error('Paste a valid JSON array.');}
+ if(!Array.isArray(plan)||!plan.length||plan.length>60)throw Error('Use an array with 1 to 60 shots.');
+ return plan.map((item,index)=>{
+   if(!item||typeof item!=='object'||Array.isArray(item))throw Error('Shot '+(index+1)+' must be a JSON object.');
+   const shot={series,provider,chapter:'Imported plan',excerpt:'',characters:[]};
+   for(const key of ['name','setting','action','camera','dialogue','audio','effects']){
+     const required=['name','setting','action','camera'].includes(key);
+     const value=item[key]??'';
+     if(typeof value!=='string'||value.length>600||(required&&!value.trim())){
+       throw Error('Shot '+(index+1)+' needs '+key+' as text of up to 600 characters.');
+     }
+     shot[key]=value.trim();
+   }
+   if(item.duration!==3&&item.duration!==5)throw Error('Shot '+(index+1)+' needs a duration of 3 or 5 seconds.');
+   shot.duration=item.duration;
+   if(item.characters!==undefined){
+     if(!Array.isArray(item.characters)||item.characters.length>cast.length||item.characters.some(id=>!cast.some(character=>character.id===id))){
+       throw Error('Shot '+(index+1)+' has an unknown character ID.');
+     }
+     shot.characters=[...new Set(item.characters)];
+   }
+   const warning=canonReport(shot).problems[0];
+   if(warning)throw Error('Shot '+(index+1)+' · '+warning);
+   return shot;
+ });
+}
+function importShotPlan(){
+ const status=$('shot-plan-status');
+ try{
+   const {series,provider}=readForm();
+   const plan=parseShotPlan($('shot-plan-json').value,series,provider);
+   const first=state.shots.reduce((next,shot)=>Math.max(next,Number(shot.number)+1),1);
+   const added=plan.map((shot,index)=>({...shot,number:first+index,id:crypto.randomUUID(),created:Date.now()}));
+   const next={...state,shots:[...state.shots,...added]};
+   localStorage.setItem(DB_KEY,JSON.stringify(next));
+   state=next;
+   $('shot-plan-json').value='';
+   renderShots();
+   status.textContent=added.length+' planned shots added. Review each shot before rendering.';
+ }catch(error){status.textContent=error.message;}
+}
+function init(){
+ $('shot-plan-copy').onclick=()=>copyText(planningInstructions(),'Planning instructions copied.','shot-plan-status');
+ $('shot-plan-import').onclick=importShotPlan;
+ renderCanon();setForm(state.draft);for(let id of Object.values(fields))$(id).addEventListener('input',()=>refreshDraft());for(let id of Object.values(fields))$(id).addEventListener('change',()=>refreshDraft());document.querySelectorAll('[data-tab]').forEach(button=>{
    button.onclick=button.dataset.tab==='video'?showVideoWorkspace:()=>tab(button.dataset.tab);
  });$('new-shot-shortcut').onclick=()=>{newShot();tab('studio')};$('save-shot').onclick=saveShot;$('copy-prompt').onclick=()=>copyText(prompt(readForm()),'Production prompt copied','brief-status');$('clear-draft').onclick=()=>newShot();
  $('open-video').onclick=()=>openVideo(readForm(),'studio');
