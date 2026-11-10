@@ -135,6 +135,17 @@ summary .summary-meta{margin-left:6px}
       <summary>Cast <span class="summary-meta" id="cast-selection"></span></summary>
       <div class="chiprow" id="character-chips"></div>
     </details>
+    <details class="studio-options" id="motion-plan">
+      <summary>Motion plan</summary>
+      <p class="note">Describe one visible action above. Use these fields to define how it starts and ends.</p>
+      <div class="field"><label for="motion-start">Start pose</label><input id="motion-start" maxlength="280" placeholder="Both feet planted, hands relaxed at the sides" /></div>
+      <div class="field"><label for="motion-end">End pose</label><input id="motion-end" maxlength="280" placeholder="One foot forward, weight settled on it" /></div>
+      <div class="field"><label for="motion-camera">Camera move</label><select id="motion-camera">
+        <option value="hold">Hold still</option><option value="push-in">Slow push in</option><option value="pull-back">Slow pull back</option>
+        <option value="pan-left">Pan left</option><option value="pan-right">Pan right</option>
+        <option value="track-left">Track left</option><option value="track-right">Track right</option>
+      </select></div>
+    </details>
     <details class="studio-options">
       <summary>Shot details</summary>
       <div class="fields-2"><div class="field"><label for="series">Series</label><select id="series"><option value="Beyond the Abyssal Line">Beyond the Abyssal Line</option><option value="Light Born">Light Born</option><option value="The Sagas">The Sagas</option></select></div><div class="field"><label for="chapter">Chapter / sequence</label><input id="chapter" value="90 · Darker Than Black Pt. 7" /></div></div>
@@ -240,9 +251,18 @@ summary .summary-meta{margin-left:6px}
     <div class="panel">
       <div class="panel-header"><h2>Create a clip</h2><small>Free shared GPU</small></div>
       <div class="panel-body">
+        <div class="field"><label for="video-mode">Render mode</label><select id="video-mode"><option value="concept">Concept</option><option value="production">Production · opening keyframe required</option></select></div>
         <div class="field">
-          <label for="video-prompt">Video prompt</label>
+          <label for="video-prompt" id="video-prompt-label">Video prompt</label>
           <textarea id="video-prompt" rows="4" maxlength="5000" placeholder="Describe the action, setting, and camera." spellcheck="false"></textarea>
+        </div>
+        <div id="video-motion-tools" class="hidden">
+          <p class="note" id="video-motion-note"></p>
+          <div class="button-row">
+            <button type="button" class="ghost compact-action" id="video-edit-motion">Edit motion plan</button>
+            <button type="button" class="ghost compact-action" id="video-copy-keyframe">Copy keyframe brief</button>
+          </div>
+          <p class="note video-status" id="video-keyframe-status" role="status"></p>
         </div>
         <div class="field"><label for="ai-video-model">Generator</label>
           <select id="ai-video-model" aria-describedby="ai-video-model-note"><option value="fast">Fast · LTX Video</option><option value="detail">Detail + sound · LTX-2.5</option></select>
@@ -253,13 +273,14 @@ summary .summary-meta{margin-left:6px}
           <div class="field"><label for="ai-video-frame">Frame</label><select id="ai-video-frame"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
         </div>
         <div class="field reference-field">
-          <label for="render-art">Reference art <span class="summary-meta">Optional</span></label>
+          <label for="render-art" id="reference-label">Reference art (optional)</label>
           <input type="file" id="render-art" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" />
           <div class="reference-preview hidden" id="reference-preview">
             <img id="reference-image" alt="Selected reference art" />
             <span id="reference-name"></span>
             <button type="button" class="ghost compact-action" id="reference-remove">Remove</button>
           </div>
+          <label class="check hidden" id="reference-reuse-label"><input type="checkbox" id="reference-reuse" /> <span>Reuse this image when opening the next shot</span></label>
         </div>
         <label class="check video-consent"><input type="checkbox" id="ai-video-consent" /> <span>Send this prompt and any selected art to Lightricks’ public GPU.</span></label>
         <div class="button-row">
@@ -283,16 +304,16 @@ summary .summary-meta{margin-left:6px}
           <a class="ghost label-button hidden" id="render-download">Download clip</a>
           <button type="button" class="ghost hidden" id="video-add-sequence" disabled>Add to sequence</button>
           <button type="button" class="button hidden" id="video-continue-episode" disabled>Continue episode</button>
+          <button type="button" class="ghost hidden" id="video-use-frame">Use end frame for next shot</button>
         </div>
         <p class="note video-status" id="video-sequence-status" role="status"></p>
+        <p class="note video-status" id="video-status" role="status"></p>
         <details class="studio-options" id="video-tools">
           <summary>More video tools</summary>
           <div class="button-row">
             <button type="button" class="ghost" id="video-copy">Copy video prompt</button>
-            <button type="button" class="ghost hidden" id="video-use-frame">Use final frame as reference</button>
             <button type="button" class="ghost" id="video-back">Back to Director</button>
           </div>
-          <p class="note video-status" id="video-status" role="status"></p>
           <div class="field"><label for="video-file">Open a clip from this device</label><input type="file" id="video-file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" /></div>
           <div class="field">
             <label for="render-motion">Animatic camera</label><select id="render-motion"><option value="push">Slow push in</option><option value="pan">Pan across</option><option value="hold">Hold</option></select>
@@ -415,11 +436,21 @@ const defaults={version:1,shots:[],draft:{series:'Beyond the Abyssal Line',chapt
 let state=load();let editingId=null;let sourceAnchor=null;
 function load(){try{let x=JSON.parse(localStorage.getItem(DB_KEY)||'null');if(x&&x.version===1&&Array.isArray(x.shots)&&x.draft)return {...defaults,...x};}catch(_){ }return structuredClone(defaults)}
 function persist(){try{localStorage.setItem(DB_KEY,JSON.stringify(state));}catch(err){$('save-status').textContent='Local autosave unavailable. Export a JSON backup.';}}
-const fields={series:'series',chapter:'chapter',name:'shot-name',provider:'provider',duration:'duration',number:'shot-number',setting:'scene-setting',action:'scene-action',dialogue:'scene-dialogue',camera:'scene-camera',audio:'scene-audio',effects:'scene-effects',excerpt:'source-excerpt'};
+const fields={series:'series',chapter:'chapter',name:'shot-name',provider:'provider',duration:'duration',number:'shot-number',setting:'scene-setting',action:'scene-action',dialogue:'scene-dialogue',camera:'scene-camera',audio:'scene-audio',effects:'scene-effects',excerpt:'source-excerpt',startPose:'motion-start',endPose:'motion-end',cameraMove:'motion-camera'};
+const motionCameras={
+ hold:'The camera holds still.',
+ 'push-in':'The camera pushes straight in slowly.',
+ 'pull-back':'The camera pulls straight back slowly.',
+ 'pan-left':'The camera pans slowly left.',
+ 'pan-right':'The camera pans slowly right.',
+ 'track-left':'The camera tracks slowly left.',
+ 'track-right':'The camera tracks slowly right.'
+};
 function readForm(){const d={};for(let k in fields)d[k]=e($(fields[k]).value);d.duration=Math.max(1,Math.min(60,Number(d.duration)||10));d.number=Math.max(1,Number(d.number)||1);d.characters=Array.from(document.querySelectorAll('#character-chips input:checked')).map(x=>x.value);if(sourceAnchor)d.source=sourceAnchor;return d}
 function setForm(d){
  sourceAnchor=d.source&&typeof d.source.excerpt==='string'?d.source:null;
  for(let k in fields)$(fields[k]).value=d[k]??'';
+ $('motion-camera').value=Object.hasOwn(motionCameras,d.cameraMove)?d.cameraMove:'hold';
  for(const id of ['series','chapter','source-excerpt'])$(id).disabled=Boolean(sourceAnchor);
  makeChips(d.characters||[]);
  refreshDraft(false);
@@ -446,7 +477,7 @@ function describeSource(source,includeTitle=true){
 }
 function sameText(a,b){return a.replace(/\r\n?/g,'\n')===b.replace(/\r\n?/g,'\n');}
 function canonReport(d){
- const staging=[d.setting,d.action,d.camera,d.effects].join('\n');
+ const staging=[d.setting,d.action,d.camera,d.effects,d.startPose,d.endPose].join('\n');
  const problems=[],flags=[];
  if(d.source){
    const source=d.source;
@@ -524,14 +555,54 @@ function tab(name){
  if(name==='voice')renderVoiceDirection();
  window.scrollTo(0,0);
 }
-function renderShots(){updateShotsSummary();$('shot-board-hint').textContent='';let sort=state.shots.slice().sort((a,b)=>a.number-b.number||a.created-b.created);$('shot-list').innerHTML=sort.length?sort.map(s=>`<div class="shot"><div class="shot-n">${String(s.number).padStart(2,'0')}</div><div><div class="shot-title">${safe(s.name||'Untitled')} <span style="color:var(--dim);font-size:10px;font-weight:500">· ${Number(s.duration)}s</span></div><div class="shot-desc">${safe(s.chapter)} · ${safe(s.characters.map(x=>(cast.find(c=>c.id===x)||{}).name||x).join(', ')||'Atmosphere shot')}<br>${safe((s.action||'').slice(0,170))}</div></div><div class="shot-tools"><button data-edit="${safe(s.id)}" title="Edit">Edit</button><button data-copy="${safe(s.id)}" title="Copy">Copy</button><button data-video="${safe(s.id)}">Video</button><button data-delete="${safe(s.id)}" title="Delete">×</button></div></div>`).join(''):'<div class="library-hint">No shots saved yet. Open Director’s Desk and save the first shot to begin the episode.</div>';document.querySelectorAll('[data-edit]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.edit);if(!s)return;editingId=s.id;setForm(s);$('save-shot').textContent='✓ Update shot';$('save-status').textContent='Editing saved shot '+s.number;tab('studio')});document.querySelectorAll('[data-copy]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.copy);if(s)copyText(prompt(s),'Shot prompt copied','shot-board-hint')});document.querySelectorAll('[data-video]').forEach(button=>button.onclick=()=>{
+function editSavedShot(shot){
+ editingId=shot.id;
+ setForm(shot);
+ $('save-shot').textContent='✓ Update shot';
+ $('save-status').textContent='Editing saved shot '+shot.number;
+ tab('studio');
+}
+function renderShots(){updateShotsSummary();$('shot-board-hint').textContent='';let sort=state.shots.slice().sort((a,b)=>a.number-b.number||a.created-b.created);$('shot-list').innerHTML=sort.length?sort.map(s=>`<div class="shot"><div class="shot-n">${String(s.number).padStart(2,'0')}</div><div><div class="shot-title">${safe(s.name||'Untitled')} <span style="color:var(--dim);font-size:10px;font-weight:500">· ${Number(s.duration)}s</span></div><div class="shot-desc">${safe(s.chapter)} · ${safe(s.characters.map(x=>(cast.find(c=>c.id===x)||{}).name||x).join(', ')||'Atmosphere shot')}<br>${safe((s.action||'').slice(0,170))}</div></div><div class="shot-tools"><button data-edit="${safe(s.id)}" title="Edit">Edit</button><button data-copy="${safe(s.id)}" title="Copy">Copy</button><button data-video="${safe(s.id)}">Video</button><button data-delete="${safe(s.id)}" title="Delete">×</button></div></div>`).join(''):'<div class="library-hint">No shots saved yet. Open Director’s Desk and save the first shot to begin the episode.</div>';document.querySelectorAll('[data-edit]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.edit);if(!s)return;editSavedShot(s)});document.querySelectorAll('[data-copy]').forEach(x=>x.onclick=()=>{let s=state.shots.find(a=>a.id===x.dataset.copy);if(s)copyText(prompt(s),'Shot prompt copied','shot-board-hint')});document.querySelectorAll('[data-video]').forEach(button=>button.onclick=()=>{
  const shot=state.shots.find(item=>item.id===button.dataset.video);
  if(shot)openVideo(shot,'shots');
 });document.querySelectorAll('[data-delete]').forEach(x=>x.onclick=()=>{if(!confirm('Delete this saved shot?'))return;state.shots=state.shots.filter(a=>a.id!==x.dataset.delete);persist();renderShots()})}
 let renderShot, activeRender, videoClipUrl, referenceArtUrl, frameReference, clipLabel, clipSource;
-let preparedVideoPrompt='';
+let preparedVideoPrompt='',conceptVideoPrompt='';
 let videoOrigin='studio';
+const productionMode=()=>$('video-mode').value==='production';
+function motionPlanIssue(shot){
+ if(!shot)return 'Open a shot from Director to prepare its motion.';
+ const motion=[shot.startPose,shot.action,shot.endPose];
+ if(motion.some(value=>typeof value!=='string'||!value.trim()))return 'Add a start pose, one action, and an end pose in Director.';
+ if(motion.some(value=>value.trim().length>280))return 'Keep each pose and the action within 280 characters.';
+ const move=shot.cameraMove??'hold';
+ if(typeof move!=='string'||!Object.hasOwn(motionCameras,move))return 'Choose one camera move in Director.';
+ return '';
+}
+function motionPrompt(shot){
+ return [
+   'Animate the supplied opening keyframe as one continuous shot.',
+   'Start pose: '+shot.startPose.trim(),
+   'Action: '+shot.action.trim(),
+   'End pose: '+shot.endPose.trim(),
+   motionCameras[shot.cameraMove||'hold'],
+   'Preserve the subjects, wardrobe, props, background and lighting of the opening frame. Keep motion physically grounded with consistent limbs, joints and hand contact.',
+   'Keep textures stable through the movement. Avoid flicker, texture crawl, extra fingers, warped hands, duplicated limbs, abrupt reframing, cuts, on-screen text and speech.'
+ ].join('\n');
+}
+function keyframePrompt(shot, frame){
+ const characters=shot.characters.map(id=>cast.find(character=>character.id===id)).filter(Boolean);
+ return [
+   'Create one still anime opening keyframe with clean ink outlines and cel shading in '+(frame==='portrait'?'9:16 portrait.':'16:9 landscape.'),
+   ...characters.map(character=>characterPrompt(character,shot)),
+   shot.setting&&'Setting and lighting: '+shot.setting,
+   shot.camera&&'Opening composition: '+shot.camera,
+   shot.startPose&&'Start pose: '+shot.startPose,
+   'Show the pose and prop contact clearly. Use simple stable textures and leave room for the action. No text.'
+ ].filter(Boolean).join('\n');
+}
 function currentVideoShot(){
+ if(productionMode())return renderShot;
  return preparedVideoPrompt&&$('video-prompt').value.trim()===preparedVideoPrompt?renderShot:null;
 }
 function updateVideoHeading(){
@@ -552,6 +623,25 @@ function showVideoWorkspace(){
    if(shot.action.trim()&&!canonReport(shot).problems.length)return openVideo(shot,'studio');
  }
  tab('video');
+}
+function updateVideoMode(){
+ const production=productionMode();
+ const issue=production?motionPlanIssue(renderShot):'';
+ const field=$('video-prompt');
+ field.readOnly=production;
+ field.value=production?(issue?'':motionPrompt(renderShot)):conceptVideoPrompt;
+ field.placeholder=production?'The motion prompt will appear here.':'Describe the action, setting, and camera.';
+ $('video-prompt-label').textContent=production?'Motion prompt':'Video prompt';
+ $('reference-label').textContent=production?'Opening keyframe (required)':'Reference art (optional)';
+ $('video-motion-tools').classList.toggle('hidden',!production);
+ $('video-motion-note').textContent=issue||'Use a matching keyframe for each short segment. When changing the location or lighting, hold the camera steady.';
+ $('video-copy-keyframe').disabled=!renderShot;
+ $('video-keyframe-status').textContent='';
+ $('ai-video-consent').checked=false;
+ if(!aiVideoRequest)$('ai-video-status').textContent='';
+ alignKeyframe();
+ updateVideoHeading();
+ updateVideoModel();
 }
 function openVideo(shot, origin){
  const status=$(origin==='shots'?'shot-board-hint':'save-status');
@@ -579,23 +669,40 @@ function openVideo(shot, origin){
  const source=shot.source;
  const referenceSource=frameReference?.source;
  const sameChapter=source?.documentId&&source.documentId===referenceSource?.documentId&&source.updated===referenceSource.updated;
- renderShot=shot;
+ const id=shot.id||(origin==='studio'?editingId:null);
+ const sameShot=renderShot&&(id?id===renderShot.id:
+   !renderShot.id&&shot.number===renderShot.number&&shot.name===renderShot.name&&shot.chapter===renderShot.chapter&&shot.series===renderShot.series);
+ const keepImage=($('reference-reuse').checked||sameShot)?getReferenceArt():null;
+ renderShot=id?{...shot,id}:shot;
  videoOrigin=origin;
  $('video-back').textContent=origin==='shots'?'Back to Shots':'Back to Director';
  preparedVideoPrompt=directions.filter(Boolean).join('\n').trim();
- $('video-prompt').value=preparedVideoPrompt;
- updateVideoHeading();
- if(source)$('ai-video-length').value=$('ai-video-model').value==='detail'||shot.duration<=3?'3':'5';
- updateVideoModel();
+ conceptVideoPrompt=preparedVideoPrompt;
+ $('video-mode').value=shot.startPose||shot.endPose?'production':'concept';
+ if(source||[3,5].includes(shot.duration)||productionMode())$('ai-video-length').value=shot.duration<=3?'3':'5';
  $('video-status').textContent='';
  $('render-status').textContent='';
  $('render-art').value='';
- if(!sameChapter)frameReference=null;
+ if(keepImage)frameReference={file:keepImage,source:referenceSource};
+ else if(!sameChapter)frameReference=null;
+ if(!sameShot)$('reference-reuse').checked=false;
  updateReferencePreview();
+ updateVideoMode();
  tab('video');
 }
 function getReferenceArt(){
  return $('render-art').files[0]||frameReference?.file;
+}
+function keyframeOrientation(){
+ const image=$('reference-image');
+ if(!getReferenceArt()||!image.complete||!image.naturalWidth||image.naturalWidth===image.naturalHeight)return '';
+ return image.naturalWidth>image.naturalHeight?'landscape':'portrait';
+}
+function alignKeyframe(){
+ const orientation=productionMode()?keyframeOrientation():'';
+ const frame=$('ai-video-frame');
+ if(orientation)frame.value=orientation;
+ frame.disabled=Boolean(orientation);
 }
 function updateReferencePreview(){
  if(referenceArtUrl)URL.revokeObjectURL(referenceArtUrl);
@@ -606,6 +713,9 @@ function updateReferencePreview(){
  else image.removeAttribute('src');
  $('reference-name').textContent=file?.name||'';
  $('reference-preview').classList.toggle('hidden',!file);
+ $('reference-reuse-label').classList.toggle('hidden',!file);
+ if(!file)$('reference-reuse').checked=false;
+ alignKeyframe();
  $('ai-video-consent').checked=false;
  if(!aiVideoRequest)$('ai-video-status').textContent='';
 }
@@ -640,12 +750,13 @@ async function useFinalFrame(){
    canvas.width=Math.round(video.videoWidth*scale);
    canvas.height=Math.round(video.videoHeight*scale);
    canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
-   const image=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.92));
+   const image=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
    if(!image||videoClipUrl!==url)throw Error('The preview changed before its final frame was ready.');
    $('render-art').value='';
-   frameReference={file:new File([image],'previous-clip-final-frame.jpg',{type:'image/jpeg'}),source:clipSource};
+   frameReference={file:new File([image],'previous-clip-final-frame.png',{type:'image/png'}),source:clipSource};
    updateReferencePreview();
-   status.textContent='Final frame added as reference art for your next clip.';
+   $('reference-reuse').checked=true;
+   status.textContent='End frame selected for the next shot. Review it before rendering.';
  }catch(error){
    status.textContent=error.message;
  }finally{
@@ -841,7 +952,9 @@ function updateVideoModel(){
  const length=$('ai-video-length');
  length.querySelector('option[value="5"]').disabled=detail;
  if(detail)length.value='3';
- $('ai-video-model-note').textContent=detail
+ $('ai-video-model-note').textContent=productionMode()
+   ? (detail?'Three seconds with generated audio. Add voice takes in Sequence.':'Silent clips, 3 or 5 seconds. Add voice takes in Sequence.')
+   : detail
    ? 'Three seconds with generated audio. Check any spoken line and lip sync in the preview.'
    : currentVideoShot()?.dialogue?'Fast makes silent clips. Choose Detail + sound to try the spoken line.':'Silent clips, 3 or 5 seconds.';
 }
@@ -849,12 +962,21 @@ let aiVideoRequest;
 async function generateAiVideo(){
  if(aiVideoRequest||activeRender)return;
  const status=$('ai-video-status'), button=$('ai-video-start');
- const prompt=$('video-prompt').value.trim();
+ const production=productionMode();
  const art=getReferenceArt();
+ const shot=currentVideoShot();
+ if(production){
+   if(!art){status.textContent='Choose an opening keyframe before rendering in Production.';return;}
+   const issue=motionPlanIssue(shot);
+   if(issue){status.textContent=issue;return;}
+   const image=$('reference-image');
+   if(!image.complete||!image.naturalWidth){status.textContent='Wait for the keyframe preview to load or choose another image.';return;}
+ }
+ const prompt=production?motionPrompt(shot):$('video-prompt').value.trim();
  const detail=$('ai-video-model').value==='detail';
  const sharedGpu=videoModels[detail?'detail':'fast'];
- const shot=currentVideoShot();
- const portrait=$('ai-video-frame').value==='portrait';
+ const frame=(production&&keyframeOrientation())||$('ai-video-frame').value;
+ const portrait=frame==='portrait';
  const seconds=Number($('ai-video-length').value);
  if(!prompt||prompt.length>5000){status.textContent='Enter a prompt between 1 and 5,000 characters.';return;}
  if(!$('ai-video-consent').checked){status.textContent='Confirm that you want to send the prompt and any selected art to the shared GPU.';return;}
@@ -890,10 +1012,13 @@ async function generateAiVideo(){
    const endpoint=detail?'run':art?'image_to_video':'text_to_video';
    const mode=art?'image-to-video':'text-to-video';
    const height=portrait?736:416, width=portrait?416:736;
-   const direction=art?prompt+'\nKeep the character design and palette established by the first frame.':prompt;
+   const direction=art&&!production?prompt+'\nKeep the character design and palette established by the first frame.':prompt;
+   const negative=production
+     ? 'flicker, jitter, extra limbs, extra fingers, warped hands, distorted joints, duplicated subjects, costume changes, lighting shifts, texture crawl, sudden zoom, cuts, unwanted text'
+     : 'blurry, flicker, jitter, warped hands, costume changes, unwanted text';
    const data=detail
-     ? [direction,reference,portrait?896:512,portrait?512:896,3,42,'conv',false,true,false]
-     : [direction,'blurry, flicker, jitter, warped hands, costume changes, unwanted text',reference,null,height,width,mode,seconds,9,42,true,3,true];
+     ? [direction,reference,portrait?896:512,portrait?512:896,3,42,'conv',false,!production,false]
+     : [direction,negative,reference,null,height,width,mode,seconds,9,42,!production,3,true];
    const job=await (await request('call/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data})})).json();
    if(typeof job.event_id!=='string'||!job.event_id)throw Error('The shared GPU did not return a job ID.');
    status.textContent='Waiting for the shared GPU. You can switch Studio tabs while it runs.';
@@ -916,7 +1041,8 @@ async function generateAiVideo(){
    if(!video.size||!video.type.startsWith('video/'))throw Error('The response was not a playable video.');
    const extension=video.type.includes('webm')?'webm':'mp4';
    const clip=new File([video],clipFilename(shot,detail?'ltx25':'ai',extension),{type:video.type});
-   showVideoClip(clip,detail?'LTX-2.5 · with sound':'LTX Video',shot);
+   const kind=detail?'LTX-2.5 · with sound':'LTX Video';
+   showVideoClip(clip,production?'Production · '+kind:kind,shot);
    status.textContent='AI clip ready.';
  }catch(error){
    if(signal.aborted){
@@ -952,8 +1078,22 @@ function exportDownload(name,content,mime){let blob=new Blob([content],{type:mim
 function packed(){return JSON.stringify({...state,exportedAt:new Date().toISOString()},null,2)}
 function importData(file){if(!file)return;file.text().then(s=>{let d=JSON.parse(s);if(d.version!==1||!Array.isArray(d.shots)||!d.draft||typeof d.draft!=='object'||d.shots.some(x=>!Array.isArray(x.characters)))throw Error('Unsupported project file');if(!confirm('Replace your current shots and draft with this imported project?'))return;state={version:1,shots:d.shots,draft:{...defaults.draft,...d.draft}};clearEditing();setForm(state.draft);persist();renderShots();updateShotsSummary();$('import-status').textContent='Project restored successfully.'}).catch(err=>{$('import-status').textContent='Unable to import: '+err.message})}
 function planningInstructions(){
- const example=[{name:'Courtyard arrival',duration:5,setting:'Stone courtyard at dusk, warm lanterns',action:'A courier steps through the gate',camera:'Wide shot, slow push in',dialogue:'',audio:'Footsteps on stone',effects:'',characters:[]}];
- return 'Act as a cinematographer. Turn my brief into an ordered JSON array using the fields in this example. Return raw JSON only. Plan 1 to 60 shots, each 3 or 5 seconds, with one visible action per shot. Include lighting and visual style in setting. Use supplied dialogue verbatim. Leave dialogue empty when there is no supplied line. Use an empty characters list for unnamed subjects or these IDs for established characters: '+cast.map(character=>character.id).join(', ')+'. Keep clothing, props and positions consistent across shots.\n\n'+JSON.stringify(example,null,2)+'\n\nMy brief:';
+ const example=[{
+   name:'Courtyard arrival',duration:5,setting:'Stone courtyard at dusk, warm lanterns, cel-shaded anime',
+   camera:'Wide, eye-level opening composition',startPose:'Both feet planted just outside the gate',
+   action:'The courier takes one step forward',endPose:'Front foot planted just inside the gate',
+   cameraMove:'hold',dialogue:'',audio:'Footsteps on stone',effects:'',characters:[]
+ }];
+ return [
+   'Act as a cinematographer. Turn my brief into an ordered JSON array using the fields in the example below. Return raw JSON only.',
+   'Plan 1 to 60 shots of 3 or 5 seconds. Describe one visible action per shot. Use startPose and endPose for body positions and prop contact, keeping each pose and action within 280 characters.',
+   'Split longer movements into short shots. Match each next start pose to the prior end pose when the action continues.',
+   'Put the setting, lighting and style in setting, and the opening composition in camera. Keep costumes and props consistent. Hold the camera when the location or lighting changes.',
+   'Choose one cameraMove value from '+Object.keys(motionCameras).join(', ')+'.',
+   'Use supplied dialogue verbatim. Leave dialogue empty when there is no supplied line. Use an empty characters list for unnamed subjects or these IDs for established characters: '+cast.map(character=>character.id).join(', ')+'.',
+   JSON.stringify(example,null,2),
+   'My brief'
+ ].join('\n\n');
 }
 function parseShotPlan(text, series, provider){
  const raw=text.trim().replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/i,'$1');
@@ -973,6 +1113,15 @@ function parseShotPlan(text, series, provider){
    }
    if(item.duration!==3&&item.duration!==5)throw Error('Shot '+(index+1)+' needs a duration of 3 or 5 seconds.');
    shot.duration=item.duration;
+   if(['startPose','endPose','cameraMove'].some(key=>Object.hasOwn(item,key))){
+     shot.startPose=item.startPose;
+     shot.endPose=item.endPose;
+     shot.cameraMove=item.cameraMove??'hold';
+     const issue=motionPlanIssue(shot);
+     if(issue)throw Error('Shot '+(index+1)+' · '+issue);
+     shot.startPose=shot.startPose.trim();
+     shot.endPose=shot.endPose.trim();
+   }
    if(item.characters!==undefined){
      if(!Array.isArray(item.characters)||item.characters.length>cast.length||item.characters.some(id=>!cast.some(character=>character.id===id))){
        throw Error('Shot '+(index+1)+' has an unknown character ID.');
@@ -1020,7 +1169,22 @@ function init(){
  };
  $('render-art').onchange=()=>{
    frameReference=null;
+   $('reference-reuse').checked=false;
    updateReferencePreview();
+ };
+ $('reference-image').onload=alignKeyframe;
+ $('video-mode').onchange=updateVideoMode;
+ $('video-edit-motion').onclick=()=>{
+   if(videoOrigin==='shots'){
+     const saved=state.shots.find(shot=>shot.id===renderShot?.id);
+     if(!saved)return tab('shots');
+     editSavedShot(saved);
+   }else tab('studio');
+   $('motion-plan').open=true;
+   $('motion-start').focus();
+ };
+ $('video-copy-keyframe').onclick=()=>{
+   if(renderShot)copyText(keyframePrompt(renderShot,$('ai-video-frame').value),'Keyframe brief copied.','video-keyframe-status');
  };
  $('ai-video-model').onchange=updateVideoModel;
  updateVideoModel();
@@ -1031,6 +1195,7 @@ function init(){
    updateReferencePreview();
  };
  $('video-prompt').oninput=()=>{
+   if(!productionMode())conceptVideoPrompt=$('video-prompt').value;
    updateVideoHeading();
    updateVideoModel();
    $('ai-video-consent').checked=false;
