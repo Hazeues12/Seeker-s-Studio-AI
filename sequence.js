@@ -10,7 +10,12 @@
   const download = get('sequence-download');
   const preview = get('sequence-preview');
   const list = get('sequence-list');
+  const voiceSelect = get('sequence-voice-clip');
+  const voicePreview = get('sequence-voice-preview');
+  const voiceStatus = get('sequence-voice-status');
+  const burnCaptions = get('sequence-burn-captions');
   let db, currentClip, rejectExport, outputUrl;
+  let voicePreviewUrl, previewedVoice;
   let clips = [];
   let busy = true;
   const addPreview = get('video-add-sequence');
@@ -24,6 +29,8 @@
 
   const sortClips = entries => entries.sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
   const total = entries => entries.reduce((sum, clip) => sum + clip.frames, 0);
+  const totalBytes = entries => entries.reduce((sum, clip) => sum + clip.file.size + (clip.voice?.file.size || 0), 0);
+  const selectedClip = () => clips.find(clip => clip.id === voiceSelect.value);
   const time = frames => {
     const seconds = Math.floor(frames / fps);
     return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
@@ -68,7 +75,7 @@
 
   function mediaJob(message, onProgress) {
     return new Promise((resolve, reject) => {
-      const task = new Worker('sequence-worker.js?v=2');
+      const task = new Worker('sequence-worker.js?v=3');
       function finish(callback, value) {
         task.terminate();
         rejectExport = null;
@@ -101,6 +108,7 @@
     download.classList.add('hidden');
     URL.revokeObjectURL(outputUrl);
     outputUrl = null;
+    status.textContent = '';
   }
 
   function updateButtons() {
@@ -112,9 +120,39 @@
     get('sequence-export').disabled = busy || !clips.length;
     get('sequence-files').disabled = busy;
     get('sequence-frame').disabled = busy;
+    voiceSelect.disabled = busy || !clips.length;
+    const clip = selectedClip();
+    get('sequence-voice-file').disabled = busy || !clip;
+    get('sequence-voice-blend').disabled = busy || !clip?.voice || !clip.audio;
+    get('sequence-voice-remove').disabled = busy || !clip?.voice;
+    const captionsUnavailable = busy || !clips.some(clip => clip.caption);
+    burnCaptions.disabled = captionsUnavailable;
+    get('sequence-caption-download').disabled = captionsUnavailable;
     for (const button of list.querySelectorAll('button')) {
       button.disabled = busy || button.dataset.boundary === 'true';
     }
+  }
+
+  function renderVoice() {
+    const clip = selectedClip();
+    const voice = clip?.voice;
+    const file = voice?.file;
+    get('sequence-script-line').textContent = clip?.caption || (clip ? 'Add dialogue in Director to caption a new clip.' : '');
+    get('sequence-voice-name').textContent = file ? file.name + ' · ' + voice.duration.toFixed(1) + ' s' : '';
+    get('sequence-voice-blend').checked = Boolean(voice?.blend);
+    get('sequence-blend-label').classList.toggle('hidden', !voice || !clip.audio);
+    get('sequence-voice-remove').classList.toggle('hidden', !voice);
+    if (file === previewedVoice) return;
+    voicePreview.pause();
+    if (voicePreviewUrl) URL.revokeObjectURL(voicePreviewUrl);
+    voicePreviewUrl = file ? URL.createObjectURL(file) : null;
+    previewedVoice = file;
+    if (voicePreviewUrl) voicePreview.src = voicePreviewUrl;
+    else {
+      voicePreview.removeAttribute('src');
+      voicePreview.load();
+    }
+    voicePreview.classList.toggle('hidden', !file);
   }
 
   function actionButton(label, description, action, boundary = false) {
@@ -160,20 +198,30 @@
       row.append(title, actions);
       list.append(row);
     }
+    const previous = voiceSelect.value;
+    voiceSelect.replaceChildren(...(count ? clips.map((clip, index) =>
+      new Option('Shot ' + (index + 1) + ' · ' + clip.file.name, clip.id)
+    ) : [new Option('Add a clip first', '')]));
+    if (clips.some(clip => clip.id === previous)) voiceSelect.value = previous;
+    renderVoice();
+    const captionCount = clips.filter(clip => clip.caption).length;
+    get('sequence-caption-count').textContent = captionCount
+      ? 'Scripted subtitles for ' + captionCount + ' of ' + count + ' clips.'
+      : 'Add a Director clip with dialogue to make subtitles.';
     updateButtons();
     window.dispatchEvent(new Event('seeker:sequence-change'));
   }
 
-  async function changeSequence(change, message) {
+  async function changeSequence(change, message, messageTarget = status) {
     if (busy) return;
     busy = true;
     updateButtons();
     try {
       clips = await sequenceTransaction(change);
       clearOutput();
-      status.textContent = message;
+      messageTarget.textContent = message;
     } catch (error) {
-      status.textContent = error.message;
+      messageTarget.textContent = error.message;
     } finally {
       busy = false;
       renderList();
@@ -196,6 +244,54 @@
     return changeSequence(entries => entries.filter(clip => clip.id !== id), 'Shot removed from the sequence.');
   }
 
+  async function attachVoice(file, id) {
+    if (!file || !id || busy) return;
+    busy = true;
+    updateButtons();
+    try {
+      if (file.size > maxBytes) throw Error('Choose a smaller voice file.');
+      voiceStatus.textContent = 'Reading voice take…';
+      const duration = await mediaJob({ action: 'inspect-audio', file });
+      clips = await sequenceTransaction(entries => {
+        const clip = entries.find(entry => entry.id === id);
+        if (!clip) throw Error('The selected shot was removed.');
+        const seconds = clip.frames / fps;
+        if (duration > seconds + 1 / fps) {
+          throw Error('The voice take is ' + duration.toFixed(1) + ' s. Choose a take that fits this ' + seconds.toFixed(1) + ' s shot.');
+        }
+        const next = entries.map(entry => entry.id === id
+          ? { ...entry, voice: { file, duration, blend: Boolean(entry.voice?.blend) } } : entry);
+        if (totalBytes(next) > maxBytes) throw Error('The sequence can hold up to 256 MB of video and audio.');
+        return next;
+      });
+      clearOutput();
+      voiceStatus.textContent = 'Voice take attached to the shot.';
+    } catch (error) {
+      voiceStatus.textContent = error.message;
+    } finally {
+      busy = false;
+      renderList();
+    }
+  }
+
+  function editVoice(update, message) {
+    const id = voiceSelect.value;
+    return changeSequence(entries => entries.map(clip => clip.id === id && clip.voice
+      ? { ...clip, voice: update(clip.voice) } : clip), message, voiceStatus);
+  }
+
+  function downloadCaptions() {
+    const stamp = frame => new Date(Math.round(frame * 1000 / fps)).toISOString().slice(11, 23).replace('.', ',');
+    const cues = [];
+    let start = 0;
+    for (const clip of clips) {
+      const end = start + clip.frames;
+      if (clip.caption) cues.push([cues.length + 1, stamp(start) + ' --> ' + stamp(end), clip.caption].join('\n'));
+      start = end;
+    }
+    if (cues.length) exportDownload('seeker-sequence.srt', cues.join('\n\n') + '\n', 'text/plain;charset=utf-8');
+  }
+
   async function addFiles(files, messageTarget, fromPreview) {
     if (!files.length || busy) return;
     const linkedId = fromPreview?.source?.beat ? fromPreview.id : null;
@@ -215,11 +311,11 @@
         const start = (entries.at(-1)?.order ?? -1) + 1;
         const next = entries.concat(files.map((file, index) => ({
           ...info[index], file, id: linkedId || crypto.randomUUID(), order: start + index,
-          source: fromPreview?.source
+          source: fromPreview?.source, caption: fromPreview?.caption
         })));
         if (total(next) > maxFrames) throw Error('This would put the sequence over 5:00.');
-        if (next.reduce((sum, clip) => sum + clip.file.size, 0) > maxBytes) {
-          throw Error('The sequence can hold up to 256 MB of source clips.');
+        if (totalBytes(next) > maxBytes) {
+          throw Error('The sequence can hold up to 256 MB of video and audio.');
         }
         return next;
       });
@@ -248,7 +344,7 @@
       const frame = get('sequence-frame').value;
       const portrait = frame === 'portrait' || (frame === 'auto' && clips[0].height > clips[0].width);
       cancel.classList.remove('hidden');
-      const buffer = await mediaJob({ action: 'export', clips, portrait }, data => {
+      const buffer = await mediaJob({ action: 'export', clips, portrait, captions: burnCaptions.checked }, data => {
         progress.value = data.percent;
         const message = 'Exporting clip ' + data.index + ' of ' + data.count + '…';
         if (status.textContent !== message) status.textContent = message;
@@ -279,6 +375,23 @@
     clearOutput();
     status.textContent = '';
   };
+  voiceSelect.onchange = () => {
+    voiceStatus.textContent = '';
+    renderVoice();
+    updateButtons();
+  };
+  get('sequence-voice-file').onchange = event => {
+    const file = event.target.files[0];
+    event.target.value = '';
+    attachVoice(file, voiceSelect.value);
+  };
+  get('sequence-voice-blend').onchange = event => {
+    const blend = event.target.checked;
+    editVoice(voice => ({ ...voice, blend }), blend ? 'Original sound will play quietly under the voice.' : 'Voice will replace the clip’s sound.');
+  };
+  get('sequence-voice-remove').onclick = () => editVoice(() => undefined, 'Voice take removed.');
+  burnCaptions.onchange = clearOutput;
+  get('sequence-caption-download').onclick = downloadCaptions;
   get('sequence-export').onclick = exportSequence;
   get('sequence-cancel').onclick = () => rejectExport?.();
   addPreview.onclick = () => {

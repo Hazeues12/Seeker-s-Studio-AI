@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#0b0e1a" />
 <title>Seeker Studio AI — Production Desk</title>
-<script src="sequence.js?v=3" defer></script>
+<script src="sequence.js?v=4" defer></script>
 <style>
 :root{--bg:#090c16;--panel:#111624;--panel2:#171d2e;--panel3:#20283b;--border:#2c3448;--text:#f3f4fb;--muted:#a1adc5;--dim:#697791;--gold:#e9b868;--gold2:#f6dba1;--aqua:#6de0d3;--red:#ff8797;--blue:#829bff;--radius:17px;--shadow:0 16px 40px #02040d6e;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
 *{box-sizing:border-box}body{background:var(--bg);color:var(--text);margin:0;min-height:100vh;font-size:14px}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:var(--gold)}
@@ -94,6 +94,8 @@ summary .summary-meta{margin-left:6px}
 #sequence-progress{accent-color:var(--gold)}
 #sequence-preview{max-height:62vh;background:#080c16;border-radius:12px}
 #sequence-download{display:inline-flex;align-items:center;text-decoration:none}
+#sequence-voice-preview{display:block;width:100%;margin:8px 0}
+#sequence-script-line{white-space:pre-wrap;overflow-wrap:anywhere}
 .episode-passage{margin-bottom:15px;max-height:265px;font-size:14px;line-height:1.65}
 #episode-plan-title{overflow-wrap:anywhere}
 #episode-text-status:empty{display:none}
@@ -326,6 +328,25 @@ summary .summary-meta{margin-left:6px}
       <div class="panel-header"><h2>Export</h2><small>MP4 · on this device</small></div>
       <div class="panel-body">
         <div class="field"><label for="sequence-frame">Frame</label><select id="sequence-frame"><option value="auto">Match first clip</option><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
+        <details class="studio-options" id="sequence-sound">
+          <summary>Voice and subtitles</summary>
+          <div class="field"><label for="sequence-voice-clip">Shot</label><select id="sequence-voice-clip" disabled><option>Add a clip first</option></select></div>
+          <p class="note" id="sequence-script-line"></p>
+          <div class="field">
+            <label for="sequence-voice-file">Voice take</label>
+            <input type="file" id="sequence-voice-file" accept=".m4a,.mp3,.wav,.aac,.webm,audio/mp4,audio/mpeg,audio/wav,audio/aac,audio/webm" disabled />
+            <p class="hint">A voice file starts with the shot and replaces its sound by default.</p>
+          </div>
+          <p class="note video-status" id="sequence-voice-name"></p>
+          <audio class="hidden" id="sequence-voice-preview" controls preload="metadata" aria-label="Voice take preview"></audio>
+          <label class="check hidden" id="sequence-blend-label"><input type="checkbox" id="sequence-voice-blend" /> <span>Keep the clip’s sound quietly under the voice</span></label>
+          <button type="button" class="ghost compact-action hidden" id="sequence-voice-remove">Remove voice take</button>
+          <p class="note video-status" id="sequence-voice-status" role="status"></p>
+          <div class="small-divider"></div>
+          <p class="note" id="sequence-caption-count">Add a Director clip with dialogue to make subtitles.</p>
+          <label class="check"><input type="checkbox" id="sequence-burn-captions" disabled /> <span>Burn subtitles into the MP4</span></label>
+          <button type="button" class="ghost compact-action" id="sequence-caption-download" disabled>Download SRT subtitles</button>
+        </details>
         <div class="button-row">
           <button type="button" class="button" id="sequence-export" disabled>Export MP4</button>
           <button type="button" class="ghost hidden" id="sequence-cancel">Cancel export</button>
@@ -474,7 +495,10 @@ function tab(name){
    sequenceOrigin=document.querySelector('[data-page="episode"]:not(.hidden)')?'episode':'video';
    $('sequence-back').textContent=sequenceOrigin==='episode'?'Back to Episode':'Back to Video';
  }
- if(name!=='sequence')$('sequence-preview').pause();
+ if(name!=='sequence'){
+   $('sequence-preview').pause();
+   $('sequence-voice-preview').pause();
+ }
  if(name!=='video'){
    cancelRender();
    $('video-preview').pause();
@@ -625,7 +649,8 @@ function clipFilename(shot, suffix, extension){
  const name=(shot?.name||'seeker').replace(/[^a-z0-9]+/gi,'-').slice(0,80).replace(/^-|-$/g,'')||'seeker';
  return name+'-'+suffix+'.'+extension;
 }
-function showVideoClip(file, kind, source){
+function showVideoClip(file, kind, shot){
+ const source=shot?.source;
  const nextUrl=URL.createObjectURL(file);
  if(videoClipUrl)URL.revokeObjectURL(videoClipUrl);
  videoClipUrl=nextUrl;
@@ -647,7 +672,8 @@ function showVideoClip(file, kind, source){
    documentId:source.documentId,updated:source.updated,title:source.title,series:source.series,beat:source.beat,
    firstLine:source.firstLine,lastLine:source.lastLine
  };
- window.dispatchEvent(new CustomEvent('seeker:clip',{detail:{file,source:link}}));
+ const caption=shot?.dialogue?.split(/\r\n?|\n/).map(line=>line.trim()).filter(Boolean).join('\n');
+ window.dispatchEvent(new CustomEvent('seeker:clip',{detail:{file,source:link,caption}}));
  if(!$('video-result').closest('[data-page]').classList.contains('hidden')){
    $('video-result').scrollIntoView({block:'nearest'});
  }
@@ -783,7 +809,7 @@ async function renderAnimatic(){
    const type=recorder.mimeType||parts[0].type;
    const extension=type.includes('mp4')?'mp4':'webm';
    const clip=new File(parts,clipFilename(shot,'animatic',extension),{type});
-   showVideoClip(clip,'Local animatic',shot.source);
+   showVideoClip(clip,'Local animatic',shot);
    status.textContent='Render complete · '+extension.toUpperCase();
  }catch(error){
    status.textContent='Render failed. '+error.message;
@@ -883,7 +909,7 @@ async function generateAiVideo(){
    if(!video.size||!video.type.startsWith('video/'))throw Error('The response was not a playable video.');
    const extension=video.type.includes('webm')?'webm':'mp4';
    const clip=new File([video],clipFilename(shot,detail?'ltx25':'ai',extension),{type:video.type});
-   showVideoClip(clip,detail?'LTX-2.5 · with sound':'LTX Video',shot?.source);
+   showVideoClip(clip,detail?'LTX-2.5 · with sound':'LTX Video',shot);
    status.textContent='AI clip ready.';
  }catch(error){
    if(signal.aborted){
