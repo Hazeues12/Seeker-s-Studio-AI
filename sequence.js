@@ -411,6 +411,16 @@
     addPreview.classList.remove('hidden');
     updateButtons();
   });
+  window.addEventListener('seeker:generated-voice', event => {
+    if (busy || !selectedClip()) {
+      event.detail.report(busy ? 'Sequence is busy. Wait for it to finish.' : 'Add a clip to Sequence and select a shot first.');
+      return;
+    }
+    const id = voiceSelect.value;
+    attachVoice(event.detail.file, id).then(() => {
+      event.detail.report(voiceStatus.textContent);
+    });
+  });
 
   (async () => {
     try {

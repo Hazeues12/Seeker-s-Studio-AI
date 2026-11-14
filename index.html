@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <meta name="theme-color" content="#0b0e1a" />
 <title>Seeker Studio AI — Production Desk</title>
-<script src="sequence.js?v=5" defer></script>
+<script src="sequence.js?v=6" defer></script>
+<script src="audio-generation.js?v=1" defer></script>
 <style>
 :root{--bg:#090c16;--panel:#111624;--panel2:#171d2e;--panel3:#20283b;--border:#2c3448;--text:#f3f4fb;--muted:#a1adc5;--dim:#697791;--gold:#e9b868;--gold2:#f6dba1;--aqua:#6de0d3;--red:#ff8797;--blue:#829bff;--radius:17px;--shadow:0 16px 40px #02040d6e;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
 *{box-sizing:border-box}body{background:var(--bg);color:var(--text);margin:0;min-height:100vh;font-size:14px}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:var(--gold)}
@@ -401,7 +402,34 @@ summary .summary-meta{margin-left:6px}
 <div class="panel" style="margin-top:16px"><div class="panel-header"><h2>Continuity safeguards</h2></div><div class="panel-body"><div class="check"><input type="checkbox" checked disabled /><span>No unapproved costume, weapon, ability, outcome or relationship changes</span></div><div class="check"><input type="checkbox" checked disabled /><span>Separate published information from inferred staging choices</span></div><div class="check"><input type="checkbox" checked disabled /><span>Maintain per-shot position, injuries, equipment, lighting and voice direction</span></div><div class="check"><input type="checkbox" checked disabled /><span>Use source passages for exact dialogue and sequence fidelity</span></div><p class="hint">V2 adds a manuscript library, offline targeted checks, and optional AI-assisted review. Full semantic verification depends on the supplied chapters; never treat AI output as automatically authoritative.</p></div></div>
 </section>
 <section data-page="voice" class="hidden">
-<div class="page-head"><div><div class="eyebrow">PERFORMANCE & VOICE DIRECTION</div><h1>Voice Lab<span style="color:var(--gold)">.</span></h1><p>Audition spoken lines using available device voices and write performance instructions for future synthetic or recorded voice tracks.</p></div></div>
+<div class="page-head"><div><h1>Voice &amp; Music</h1><p>Generate voice takes, original songs, and instrumental cues.</p></div></div>
+<div class="panel" style="margin-bottom:16px"><div class="panel-body">
+<div class="field"><label for="audio-task">Create</label><select id="audio-task"><option value="voice">AI voice · Kokoro</option><option value="song">Song · ACE-Step (experimental)</option><option value="instrumental">Instrumental · ACE-Step (experimental)</option></select></div>
+<div id="audio-voice-fields">
+  <div class="field"><label for="audio-text">Exact spoken text</label><textarea id="audio-text" maxlength="1800" placeholder="Enter the line to generate."></textarea></div>
+  <div class="fields-2">
+    <div class="field"><label for="audio-voice">Voice</label><select id="audio-voice"><option value="af_heart">Heart · American English</option><option value="af_bella">Bella · American English</option><option value="am_michael">Michael · American English</option><option value="am_fenrir">Fenrir · American English</option><option value="bf_emma">Emma · British English</option><option value="bm_george">George · British English</option></select></div>
+    <div class="field"><label for="audio-speed">Delivery speed</label><select id="audio-speed"><option value="0.85">Measured</option><option selected value="1">Natural</option><option value="1.15">Urgent</option></select></div>
+  </div>
+  <button type="button" class="ghost compact-action" id="audio-copy-line">Use current Director line</button>
+</div>
+<div id="audio-music-fields" class="hidden">
+  <p class="note">Song generation is experimental. The public music demos failed verification for this release. You can save a music brief and try the queue again later.</p>
+  <div class="field"><label for="audio-music-prompt">Music description</label><textarea id="audio-music-prompt" maxlength="1000" placeholder="Anime opening, melodic rock, bright guitar, driving drums, hopeful, 120 BPM, English vocals"></textarea></div>
+  <div class="field" id="audio-lyrics-field"><label for="audio-lyrics">Your lyrics</label><textarea id="audio-lyrics" maxlength="3000" placeholder="[verse]&#10;Write your original lyrics here&#10;&#10;[chorus]"></textarea></div>
+  <div class="field"><label for="audio-music-length">Length</label><select id="audio-music-length"><option value="30">30 seconds</option><option value="60">60 seconds</option><option value="120">2 minutes</option></select></div>
+  <button type="button" class="ghost compact-action" id="audio-save-brief">Download music brief</button>
+</div>
+<p class="note">Uses free public demos. Queues and quotas vary. Review and download each result before closing Studio.</p>
+<label class="check"><input type="checkbox" id="audio-consent" /><span>Send this text to the selected public audio generator.</span></label>
+<div class="button-row"><button type="button" class="button" id="audio-generate">Generate audio</button><button type="button" class="ghost hidden" id="audio-stop">Stop waiting</button></div>
+<p class="note" id="audio-generation-status" role="status"></p>
+<div class="hidden" id="audio-result">
+  <p class="note" id="audio-result-name"></p>
+  <audio id="audio-generated-preview" controls preload="metadata" style="width:100%"></audio>
+  <div class="button-row"><a class="ghost label-button" id="audio-download">Download audio</a><button type="button" class="ghost" id="audio-attach">Use as voice take in selected Sequence shot</button></div>
+</div>
+</div></div>
 <div class="workspace"><div class="panel"><div class="panel-header"><h2>Voice audition</h2><small>Built-in speech preview</small></div><div class="panel-body">
 <div class="field"><label for="voice-character">Character</label><select id="voice-character"></select></div>
 <div class="field"><label for="voice-text">Spoken line</label><textarea id="voice-text" placeholder="Paste a licensed or original line to audition. This app does not invent published dialogue."></textarea></div>
