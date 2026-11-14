@@ -6,6 +6,8 @@
   const musicHost = 'https://ace-step-ace-step.hf.space';
   const status = get('audio-generation-status');
   let request, outputUrl, generatedVoice;
+  let refreshLimit = () => {};
+  const providerKey = () => get('audio-task').value === 'voice' ? 'kokoro' : 'huggingface-gpu';
 
   function invalidateConsent() {
     get('audio-consent').checked = false;
@@ -17,6 +19,7 @@
     get('audio-music-fields').classList.toggle('hidden', voice);
     get('audio-lyrics-field').classList.toggle('hidden', get('audio-task').value === 'instrumental');
     invalidateConsent();
+    refreshLimit();
   }
 
   async function generate() {
@@ -39,6 +42,12 @@
       return;
     }
     const host = voice ? voiceHost : musicHost;
+    const key = providerKey();
+    const blocked = SeekerProvider.blocked(key);
+    if (blocked) {
+      status.textContent = blocked;
+      return;
+    }
     const endpoint = voice ? 'predict' : '__call__';
     const controller = new AbortController();
     request = controller;
@@ -51,8 +60,7 @@
         const response = await fetch(host + '/gradio_api/' + path, {
           ...options, credentials: 'omit', signal: controller.signal
         });
-        if (!response.ok) throw Error('The audio demo returned HTTP ' + response.status + '. Its free quota may be exhausted.');
-        return response;
+        return SeekerProvider.check(response, voice ? 'Kokoro voice demo' : 'Hugging Face music demo');
       }
       status.textContent = 'Connecting to the audio generator…';
       const api = await (await fetchData('info')).json();
@@ -78,13 +86,7 @@
       if (typeof job.event_id !== 'string' || !job.event_id) throw Error('The generator did not return a job.');
       status.textContent = voice ? 'Generating the voice take…' : 'Waiting for the music generator…';
       const events = await (await fetchData('call/' + endpoint + '/' + encodeURIComponent(job.event_id))).text();
-      const completed = events.split(/\r?\n\r?\n/).find(event => /^event: complete\s*$/m.test(event));
-      if (!completed) {
-        const failure = events.split(/\r?\n\r?\n/).find(event => /^event: error\s*$/m.test(event));
-        const message = failure?.match(/^data: (.+)$/m)?.[1];
-        throw Error(message && message !== 'null' ? message.slice(0, 250) : 'The audio queue ended without a result.');
-      }
-      const result = JSON.parse(completed.match(/^data: (.+)$/m)?.[1] || 'null');
+      const result = SeekerProvider.result(events, voice ? 'Kokoro voice demo' : 'Hugging Face music demo');
       const file = result?.[0];
       if (!file?.url && !file?.path) throw Error('The demo did not return an audio file.');
       const url = new URL(file.url || '/gradio_api/file=' + file.path, host);
@@ -110,14 +112,16 @@
       get('audio-result').classList.remove('hidden');
       status.textContent = 'Audio ready. Listen and download your take.';
     } catch (error) {
+      if (!controller.signal.aborted) SeekerProvider.pause(error, key);
       status.textContent = controller.signal.aborted
         ? controller.signal.reason === 'timeout' ? 'The audio request timed out. Try again later.' : 'Stopped waiting. The submitted job may still finish.'
-        : 'Audio generation failed. ' + error.message;
+        : error.kind ? error.message : 'Audio generation failed. ' + error.message;
     } finally {
       clearTimeout(timeout);
       request = null;
       get('audio-generate').disabled = false;
       get('audio-stop').classList.add('hidden');
+      refreshLimit();
     }
   }
 
@@ -150,5 +154,9 @@
       detail: { file: generatedVoice, report: message => { status.textContent = message; } }
     }));
   };
+  refreshLimit = SeekerProvider.watch({
+    key: providerKey, busy: () => Boolean(request),
+    button: get('audio-generate'), note: get('audio-provider-limit')
+  });
   updateTask();
 })();

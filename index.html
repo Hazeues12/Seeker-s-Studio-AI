@@ -6,7 +6,8 @@
 <meta name="theme-color" content="#0b0e1a" />
 <title>Seeker Studio AI — Production Desk</title>
 <script src="sequence.js?v=6" defer></script>
-<script src="audio-generation.js?v=1" defer></script>
+<script src="provider-errors.js?v=1"></script>
+<script src="audio-generation.js?v=2" defer></script>
 <style>
 :root{--bg:#090c16;--panel:#111624;--panel2:#171d2e;--panel3:#20283b;--border:#2c3448;--text:#f3f4fb;--muted:#a1adc5;--dim:#697791;--gold:#e9b868;--gold2:#f6dba1;--aqua:#6de0d3;--red:#ff8797;--blue:#829bff;--radius:17px;--shadow:0 16px 40px #02040d6e;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
 *{box-sizing:border-box}body{background:var(--bg);color:var(--text);margin:0;min-height:100vh;font-size:14px}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:var(--gold)}
@@ -289,6 +290,8 @@ summary .summary-meta{margin-left:6px}
           <button type="button" class="ghost hidden" id="ai-video-stop">Stop waiting</button>
         </div>
         <p class="note video-status" id="ai-video-status" role="status"></p>
+        <p class="note video-status hidden" id="ai-video-limit" role="status"></p>
+        <button type="button" class="ghost hidden" id="ai-video-local">Make a local storyboard instead</button>
       </div>
     </div>
     <div class="panel" id="video-result">
@@ -424,6 +427,7 @@ summary .summary-meta{margin-left:6px}
 <label class="check"><input type="checkbox" id="audio-consent" /><span>Send this text to the selected public audio generator.</span></label>
 <div class="button-row"><button type="button" class="button" id="audio-generate">Generate audio</button><button type="button" class="ghost hidden" id="audio-stop">Stop waiting</button></div>
 <p class="note" id="audio-generation-status" role="status"></p>
+<p class="note hidden" id="audio-provider-limit" role="status"></p>
 <div class="hidden" id="audio-result">
   <p class="note" id="audio-result-name"></p>
   <audio id="audio-generated-preview" controls preload="metadata" style="width:100%"></audio>
@@ -994,9 +998,13 @@ function updateVideoModel(){
    : currentVideoShot()?.dialogue?'Fast makes silent clips. Choose Detail + sound to try the spoken line.':'Silent clips, 3 or 5 seconds.';
 }
 let aiVideoRequest;
+let refreshVideoLimit=()=>{};
 async function generateAiVideo(){
  if(aiVideoRequest||activeRender)return;
  const status=$('ai-video-status'), button=$('ai-video-start');
+ const blocked=SeekerProvider.blocked('huggingface-gpu');
+ if(blocked){status.textContent=blocked;return;}
+ $('ai-video-local').classList.add('hidden');
  const production=productionMode();
  const hd=hdModel();
  const art=getReferenceArt();
@@ -1034,11 +1042,7 @@ async function generateAiVideo(){
  try{
    async function request(path,options={}){
      const response=await fetch(sharedGpu+'/gradio_api/'+path,{...options,signal,credentials:'omit'});
-     if(!response.ok){
-       if([401,402,403,429].includes(response.status))throw Error('The shared GPU is unavailable to this session or its free quota is exhausted.');
-       throw Error('The shared GPU returned HTTP '+response.status+'.');
-     }
-     return response;
+     return SeekerProvider.check(response,'Hugging Face video demo');
    }
    let reference=null;
    if(art){
@@ -1065,13 +1069,7 @@ async function generateAiVideo(){
    if(typeof job.event_id!=='string'||!job.event_id)throw Error('The shared GPU did not return a job ID.');
    status.textContent='Waiting for the shared GPU. You can switch Studio tabs while it runs.';
    const events=await (await request('call/'+endpoint+'/'+encodeURIComponent(job.event_id))).text();
-   const completed=events.split(/\r?\n\r?\n/).find(event=>/^event: complete\s*$/m.test(event));
-   if(!completed){
-     const failure=events.split(/\r?\n\r?\n/).find(event=>/^event: error\s*$/m.test(event));
-     const message=failure?.match(/^data: (.+)$/m)?.[1];
-     throw Error(message&&message!=='null'?'Shared GPU: '+message.slice(0,220):'The queue ended without a video. Free capacity may be unavailable.');
-   }
-   const result=JSON.parse(completed.match(/^data: (.+)$/m)?.[1]||'null');
+   const result=SeekerProvider.result(events,'Hugging Face video demo');
    const file=result?.[0]?.video||result?.[0];
    if(!file?.url&&!file?.path)throw Error('The model did not return a video file.');
    const url=new URL(file.url||'/gradio_api/file='+file.path,sharedGpu);
@@ -1091,13 +1089,18 @@ async function generateAiVideo(){
      status.textContent=signal.reason==='timeout'
        ? 'The free GPU queue timed out. Try again later.'
        : 'Stopped waiting. A submitted GPU job may still finish.';
-   }else status.textContent='Generation failed. '+(error instanceof TypeError?'The shared GPU could not be reached from this browser.':error.message);
+   }else{
+     SeekerProvider.pause(error,'huggingface-gpu');
+     status.textContent=error.kind?error.message:'Generation failed. '+(error instanceof TypeError?'The shared GPU could not be reached from this browser.':error.message);
+     $('ai-video-local').classList.toggle('hidden',!['quota','duration','rate','busy'].includes(error.kind));
+   }
  }finally{
    clearTimeout(timeout);
    aiVideoRequest=null;
    stop.classList.add('hidden');
    button.disabled=false;
    $('render-start').disabled=false;
+   refreshVideoLimit();
  }
 }
 
@@ -1248,8 +1251,16 @@ function init(){
    if(!aiVideoRequest)$('ai-video-status').textContent='';
  };
  $('render-start').onclick=renderAnimatic;
+ $('ai-video-local').onclick=()=>{
+   $('video-tools').open=true;
+   renderAnimatic();
+ };
  $('ai-video-start').onclick=generateAiVideo;
  $('ai-video-stop').onclick=()=>aiVideoRequest?.abort();
+ refreshVideoLimit=SeekerProvider.watch({
+   key:()=>'huggingface-gpu',busy:()=>Boolean(aiVideoRequest||activeRender),
+   button:$('ai-video-start'),note:$('ai-video-limit')
+ });
  $('render-cancel').onclick=cancelRender;
  document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelRender();});
  const more=$('nav-more');
